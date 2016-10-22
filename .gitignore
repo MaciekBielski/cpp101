@@ -27,3 +27,7 @@
 *.exe
 *.out
 *.app
+GPATH
+GRTAGS
+GSYMS
+GTAGS
