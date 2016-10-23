@@ -11,10 +11,8 @@
 
 /* Globals */
 
-const int NUMROWS {LINES/2}      ;
-const int NUMCOLS {COLS/2}       ;
-const int CENTERY {(NUMROWS) -1} ;
-const int CENTERX {(NUMCOLS) -1} ;
+const int CENTERY {(LINES/2) -1} ;
+const int CENTERX {(COLS/2) -1} ;
 
 /*
  * Main
