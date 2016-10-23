@@ -5,6 +5,8 @@
 #include <functional>
 #include <ncurses.h>
 #include <set>
+#include "charset.hpp"
+
 using namespace std;
 
 extern const int NUMROWS  ;
@@ -18,8 +20,10 @@ class CursesIO
         bool validChar(char k) const;
         const function<char()> getc = nullptr;
         const function<void(char)> putc = nullptr;
+        const CharSet &chSet;
     public:
-        explicit CursesIO();
+        CursesIO() = delete;
+        explicit CursesIO(const CharSet& charset);
         void clearScreen() const;
         const CursesIO& operator>>( char& c) const;
         void printc(const char& c) const { this->putc(c); }
