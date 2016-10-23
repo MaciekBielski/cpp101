@@ -27,8 +27,11 @@
 *.exe
 *.out
 *.app
+
+# My changes
 GPATH
 GRTAGS
 GSYMS
 GTAGS
 calc
+*.d

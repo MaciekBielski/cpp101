@@ -1,24 +1,31 @@
 
-ROOT=/opt/clang_llvm_3.9.0
-CLANG=$(ROOT)/bin/clang++
-FLAGS= -fcolor-diagnostics -std=c++14
+ROOT		= /opt/clang_llvm_3.9.0
+CXX			= $(ROOT)/bin/clang++
+CXXFLAGS	= -fcolor-diagnostics -std=c++14 -Wall -Wpedantic
+LDFLAGS		= -lncurses
+TARGET		= calc
 
 .PHONY: clean
 
-CALC_SRC		= $(wildcard $(PWD)/*.cpp)
-CALC_HEADERS 	= $(wildcard $(PWD)/*.hpp)
-CALC_OBJS 		= $(patsubst %.cpp, %.o,$(CALC_SRC))
+SRC		= $(wildcard $(PWD)/*.cpp)
+OBJS 	= $(SRC:.cpp=.o)
+DEPS	= $(SRC:.cpp=.d)
 
-%.o : %.cpp $(shell readlink %.hpp)
-	@echo [build] $@
-	@$(CLANG) $(FLAGS) -o $@ -c $<
 
-calc: $(CALC_OBJS)
+$(TARGET): $(OBJS)
 	@rm -rf $@
 	@echo [linking] $@
-	@$(CLANG) $(FLAGS) -lncurses $(CALC_OBJS) -o $@
+	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
+
+-include $(DEPS)
+
+%.o : %.cpp
+	@echo [build] $@
+	@$(CXX) $(CXXFLAGS) -MMD -c $< -o $@ 
+
 
 clean:
-	@-rm -rf calc $(CALC_OBJS)
+	@-rm -rf $(TARGET) $(OBJS) $(DEPS)
+
 
 # add headers later
