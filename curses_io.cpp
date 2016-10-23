@@ -17,12 +17,8 @@ void CursesIO::clearScreen() const
 bool CursesIO::validChar(char k) const
 {
     auto out = false;
-    if(
-        chSet.vals.find(k) != chSet.vals.end() ||
-        chSet.addSub.find(k) != chSet.addSub.end() ||
-        chSet.mulDiv.find(k) != chSet.mulDiv.end() ||
-        chSet.brackets.find(k) != chSet.brackets.end()
-        )
+    if( chSet.isVal(k) || chSet.isAddOrSub(k) || chSet.isMulOrDiv(k) ||
+            chSet.isBracket(k) )
         out = true;
     return out;
 }
