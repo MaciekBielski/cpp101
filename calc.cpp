@@ -11,9 +11,11 @@
 
 /* Globals */
 
-const int CENTERY {(LINES/2) -1} ;
-const int CENTERX {(COLS/2) -1} ;
-
+const int CENTERY    {(LINES/2) -1} ;
+const int CENTERX    {(COLS/2) -1} ;
+const int DBGTOP     {CENTERY+1} ;
+const int DBGLEN     {LINES-DBGTOP-1} ;
+const int DBGBOTTOM  {DBGTOP+DBGLEN} ;
 /*
  * Main
  */
@@ -29,8 +31,8 @@ int main()
 __attribute__((constructor)) static void screenInit()
 {
     initscr();
+    cbreak();
     noecho();       //don't print getch() character
-    curs_set('_');
 }
 
 __attribute__((destructor)) static void screenFinish()

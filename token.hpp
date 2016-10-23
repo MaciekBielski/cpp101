@@ -8,9 +8,6 @@ using namespace std;
 
 class Token
 {
-    private:
-        ostringstream valAcc {};
-        ostringstream opAcc {};
     public:
         static void parseInput( const CursesIO& io);
 };

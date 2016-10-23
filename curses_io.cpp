@@ -4,13 +4,35 @@ using namespace std;
 
 CursesIO::CursesIO(const CharSet& charset):
     getc{getch}, putc{addch}, chSet{charset}
-{}
+{
+    wresize(stdscr, LINES-DBGTOP-1, COLS);
+    dbgw = newwin(DBGLEN, COLS,DBGTOP,0);
+}
+
+CursesIO::~CursesIO()
+{
+    delwin(dbgw);
+}
+
+static void touchDefault()
+{
+    move(DBGTOP-2, 2);
+    printw("= ");
+    refresh();
+}
 
 void CursesIO::clearScreen() const
 {
     clear();
-    move(CENTERY, 1);
-    printw("=");
+    box(stdscr,0,0);
+    refresh();
+    curs_set('_');
+    wclear(dbgw);
+    box(dbgw,0,0);
+    wrefresh(dbgw);
+    touchDefault();
+    //mvwprintw(dbgw,50,20,"TEST");
+    //wrefresh(dbgw);
 }
 
 /* validate input characters wrt predefined sets */
@@ -35,4 +57,11 @@ const CursesIO& CursesIO::operator>>( char& c ) const
     c = tmp;
 
     return *this;
+}
+
+void CursesIO::err(const string& str) const
+{
+    mvwprintw( dbgw, DBGTOP+1,1,str.c_str() );
+    wrefresh(dbgw);
+    touchDefault();
 }

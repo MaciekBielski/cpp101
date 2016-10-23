@@ -8,8 +8,11 @@
 
 using namespace std;
 
-extern const int CENTERY  ;
-extern const int CENTERX  ;
+extern const int CENTERY;
+extern const int CENTERX;
+extern const int DBGTOP;
+extern const int DBGLEN;
+extern const int DBGBOTTOM;
 
 class CursesIO
 {
@@ -18,13 +21,15 @@ class CursesIO
         const function<char()> getc = nullptr;
         const function<void(char)> putc = nullptr;
         const CharSet &chSet;
+        WINDOW *dbgw = nullptr;
     public:
         CursesIO() = delete;
+        ~CursesIO();
         explicit CursesIO(const CharSet& charset);
         void clearScreen() const;
         const CursesIO& operator>>( char& c) const;
         void printc(const char& c) const { this->putc(c); }
-        void dbg(const string& str) const;
+        void err(const string& str) const;
         /* conversion to bool */
         operator bool( ) const { return true; }
         inline const CharSet& getCharSet() const { return this->chSet; }

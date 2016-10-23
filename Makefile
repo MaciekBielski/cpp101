@@ -16,6 +16,7 @@ $(TARGET): $(OBJS)
 	@rm -rf $@
 	@echo [linking] $@
 	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
+	@gtags .
 
 -include $(DEPS)
 
