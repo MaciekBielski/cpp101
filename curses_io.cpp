@@ -35,7 +35,7 @@ void CursesIO::clearScreen() const
     //wrefresh(dbgw);
 }
 
-/* validate input characters wrt predefined sets */
+/* Validate input characters wrt predefined sets */
 bool CursesIO::validChar(char k) const
 {
     auto out = false;
@@ -59,6 +59,14 @@ const CursesIO& CursesIO::operator>>( char& c ) const
     return *this;
 }
 
+/* Removes last charcter under the cursor and replaces with c */
+void CursesIO::correctLast(const char c) const
+{
+    delch();
+    this->printc(c);
+}
+
+/* This needs to be worked on */
 void CursesIO::err(const string& str) const
 {
     mvwprintw( dbgw, DBGTOP+1,1,str.c_str() );

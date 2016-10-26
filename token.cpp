@@ -50,6 +50,16 @@ static void firstOpAfterVal(const char c, bool &hasDot,
     io.printc(c);
 }
 
+/* checks whether previous operator should be emitted or corrected/ignored */
+static void opAfterOp(const char c, stringstream &acc, const CursesIO &io)
+{
+//TODO: finished here
+   /* ')' corrects previous op, unless it was also ')' */ 
+   /* '(' only after '+/-*' */ 
+   /* '+/-*' correct previous one, unless it was ')' */ 
+}
+
+/* This should filter whatever cannot be printed on screen during typing */
 void Token::parseInput(const CursesIO &io)
 {
     static stringstream valAcc {};
@@ -73,6 +83,7 @@ void Token::parseInput(const CursesIO &io)
     /* 2nd and furthers characters */
     for(char c; io >> c;)
     {
+        assert( valAcc.rdbuf()->in_avail() >= 0 && valAcc.rdbuf()->in_avail() >= 0 );
         if( chSet.isVal(c) )
         {
             /* first character for this value */
@@ -85,22 +96,23 @@ void Token::parseInput(const CursesIO &io)
             else /* non-first char for this value */
             {
                 notFirstCharOfVal(c, hasDot, valAcc, io);
+                //TODO: what about emit
             }
         }
         else
         {
-            /*
-             * previous character was a digit - '(' is ignored
-             */
-            if( valAcc.rdbuf()->in_avail() > 0 && c != '(')
+            /* previous character was a digit - '(' is ignored */
+            if( valAcc.rdbuf()->in_avail() > 0 && c != '(' )
             {
                 emit(io, valAcc);
                 firstOpAfterVal(c, hasDot, opAcc, io);
             }
-            /* operator following another operator */
-            if( opAcc.rdbuf()->in_avail() > 0 )
+            /*
+             * operator following another operator, */
+            else if( opAcc.rdbuf()->in_avail() > 0 )
             {
-                //TODO
+                opAfterOp(c, opAcc, io);
+                //emit(io, valAcc);
             }
         }
         io.printc(c);

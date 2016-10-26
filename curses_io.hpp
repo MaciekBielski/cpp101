@@ -28,8 +28,9 @@ class CursesIO
         explicit CursesIO(const CharSet& charset);
         void clearScreen() const;
         const CursesIO& operator>>( char& c) const;
-        void printc(const char& c) const { this->putc(c); }
+        void printc(const char c) const { this->putc(c); }
         void err(const string& str) const;
+        void correctLast(const char c) const;
         /* conversion to bool */
         operator bool( ) const { return true; }
         inline const CharSet& getCharSet() const { return this->chSet; }
