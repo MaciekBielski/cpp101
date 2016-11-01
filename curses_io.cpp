@@ -66,6 +66,12 @@ void CursesIO::correctLast(const char c) const
     this->printc(c);
 }
 
+void CursesIO::acceptChar(const char c, stringstream &acc) const
+{
+    acc << c;
+    this->putc(c);
+}
+
 /* This needs to be worked on */
 void CursesIO::err(const string& str) const
 {

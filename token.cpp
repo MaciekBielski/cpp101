@@ -9,9 +9,12 @@
  * previous operators, assuming user made a mistake. Numbers have only care
  * about doubled period.
  */
+
+// XXX: this should be made class method
 static void emit(const CursesIO &io, stringstream &acc)
 {
-    //TODO: check for stupid corrections of a last sign
+    //TODO: check for stupid corrections of a last sign - this is interpreting
+    //part?
     io.err(acc.str());
     acc.str("");
     acc.clear();
@@ -22,12 +25,10 @@ static void firstCharOfVal(const char first, bool &hasDot, stringstream &acc,
 {
     if(first == '.')
     {
-        acc << '0';
         hasDot = true;
-        io.printc(0);
+        io.acceptChar('0', acc);
     }
-    acc << first;
-    io.printc(first);
+    io.acceptChar( first, acc);
 }
 
 static void notFirstCharOfVal(const char c, bool &hasDot,
@@ -37,8 +38,7 @@ static void notFirstCharOfVal(const char c, bool &hasDot,
         return;
     if( c=='.' && !hasDot)
         hasDot = true;
-    acc << c;
-    io.printc(c);
+    io.acceptChar( c, acc);
 }
 
 /* '(' has been already checked for */
@@ -46,17 +46,67 @@ static void firstOpAfterVal(const char c, bool &hasDot,
         stringstream &acc, const CursesIO &io)
 {
     hasDot = false;
-    acc << c
-    io.printc(c);
+    io.acceptChar( c, acc);
 }
 
-/* checks whether previous operator should be emitted or corrected/ignored */
+/* should acc become part of CursesIO? */
+static inline const char getPrevChar(stringstream &acc)
+{
+    acc.seekg(-1, ios::basic_ios::end);
+    return acc.peek();
+}
+
+/* should acc become part of CursesIO? */
+static inline void correctPrevChar(char c, stringstream &acc, const CursesIO &io)
+{
+    acc.seekp(-1, ios::basic_ios::end);
+    acc << c;
+    io.correctLast(c);
+}
+
+/* op is emitted only when first number after op will be written, so
+ * checks and corrections can be done here with screen updating */
+//XXX: here, the 'c' type should be statically setup to be 'Op', instead of char
+//XXX: differentiate opAcc vs valAcc at least by name
 static void opAfterOp(const char c, stringstream &acc, const CursesIO &io)
 {
-//TODO: finished here
-   /* ')' corrects previous op, unless it was also ')' */ 
-   /* '(' only after '+/-*' */ 
-   /* '+/-*' correct previous one, unless it was ')' */ 
+    /* [+] If prev was '/+-*' - accept '(', correct if '/+-*', ignore ')' */
+    /* [+] If prev was '(' - accept '(', ignore '/+-*)' */
+    /* [+] If prev was ')' - accept ')/+-*',  ignore '(' */
+    /* test it! */
+    const CharSet& chSet = io.getCharSet();
+
+    switch(getPrevChar(acc))
+    {
+        case '/':
+        case '*':
+        case '+':
+        case '-':
+            if( chSet.isMulOrDiv(c) || chSet.isAddOrSub(c) )
+                correctPrevChar(c, acc, io);
+            else if( c == '(' )
+            {
+                //XXX: acc =? opAcc
+                emit(io, acc);
+                io.acceptChar(c, acc);
+            }
+            break;
+        case '(':
+            if( c == '(' )
+            {
+                emit(io, acc);
+                io.acceptChar(c, acc);
+            }
+            break;
+        case ')':
+            if( chSet.isMulOrDiv(c) || chSet.isAddOrSub(c) || c==')' )
+            {
+                emit(io, acc);
+                io.acceptChar(c, acc);
+            }
+            break;
+    }
+
 }
 
 /* This should filter whatever cannot be printed on screen during typing */
@@ -80,15 +130,16 @@ void Token::parseInput(const CursesIO &io)
         io.printc(first);
     }
 
-    /* 2nd and furthers characters */
+    /* 2nd and further characters */
     for(char c; io >> c;)
     {
-        assert( valAcc.rdbuf()->in_avail() >= 0 && valAcc.rdbuf()->in_avail() >= 0 );
         if( chSet.isVal(c) )
         {
             /* first character for this value */
             if( opAcc.rdbuf()->in_avail() > 0 )
             {
+                // XXX: emit should be invoked from firstCharOfVal after it
+                // will become method
                 emit(io, opAcc);
                 /* again, .234 -> 0.234 */
                 firstCharOfVal(c, hasDot, valAcc, io);
@@ -104,6 +155,8 @@ void Token::parseInput(const CursesIO &io)
             /* previous character was a digit - '(' is ignored */
             if( valAcc.rdbuf()->in_avail() > 0 && c != '(' )
             {
+                // XXX: emit should be invoked from firstOpAfterVal after it
+                // will become method
                 emit(io, valAcc);
                 firstOpAfterVal(c, hasDot, opAcc, io);
             }
@@ -112,7 +165,6 @@ void Token::parseInput(const CursesIO &io)
             else if( opAcc.rdbuf()->in_avail() > 0 )
             {
                 opAfterOp(c, opAcc, io);
-                //emit(io, valAcc);
             }
         }
         io.printc(c);

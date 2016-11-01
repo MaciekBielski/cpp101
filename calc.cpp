@@ -1,5 +1,11 @@
 /*
  * Simple calculator
+ *
+ * TODO:
+ * [-] debug console
+ * [-] printing double characters and cleaning line is fucked up
+ * [-] refactor
+ * [-] emiting token
  */
 
 #include <iostream>
