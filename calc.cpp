@@ -2,7 +2,8 @@
  * Simple calculator
  *
  * TODO:
- * [-] debug console
+ * [-] scrollable? debug console
+ * [-] multiline input window
  * [-] printing double characters and cleaning line is fucked up
  * [-] refactor
  * [-] emiting token
@@ -18,11 +19,11 @@
 
 /* Globals */
 
-const int CENTERY    {(LINES/2) -1} ;
-const int CENTERX    {(COLS/2) -1} ;
-const int DBGTOP     {CENTERY+1} ;
-const int DBGLEN     {LINES-DBGTOP-1} ;
-const int DBGBOTTOM  {DBGTOP+DBGLEN} ;
+const int CENTERY       {(LINES/2) -1} ;
+const int CENTERX       {(COLS/2) -1} ;
+const int DBGTOP        {CENTERY+1} ;
+const int DBGLEN        {LINES-DBGTOP-1} ;
+const size_t DBGBOTTOM  {2} ;
 /*
  * Main
  */

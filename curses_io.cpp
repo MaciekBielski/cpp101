@@ -31,7 +31,7 @@ void CursesIO::clearScreen() const
     box(dbgw,0,0);
     wrefresh(dbgw);
     touchDefault();
-    //mvwprintw(dbgw,50,20,"TEST");
+    //mvwprintw(dbgw,1, 2,"TEST");
     //wrefresh(dbgw);
 }
 
@@ -70,12 +70,17 @@ void CursesIO::acceptChar(const char c, stringstream &acc) const
 {
     acc << c;
     this->putc(c);
+    err(string{ c });
 }
 
 /* This needs to be worked on */
 void CursesIO::err(const string& str) const
 {
-    mvwprintw( dbgw, DBGTOP+1,1,str.c_str() );
+    static int8_t errOffset = DBGBOTTOM;
+
+    mvwprintw( dbgw, errOffset, 2,str.c_str() );
     wrefresh(dbgw);
-    touchDefault();
+    errOffset = ( (errOffset +1 - DBGBOTTOM) % (DBGLEN - 1 - DBGBOTTOM)) + DBGBOTTOM;
+
+    //touchDefault();
 }

@@ -13,7 +13,7 @@ extern const int CENTERY;
 extern const int CENTERX;
 extern const int DBGTOP;
 extern const int DBGLEN;
-extern const int DBGBOTTOM;
+extern const size_t DBGBOTTOM;
 
 class CursesIO
 {
