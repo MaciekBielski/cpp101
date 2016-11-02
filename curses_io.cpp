@@ -63,7 +63,7 @@ const CursesIO& CursesIO::operator>>( char& c ) const
 void CursesIO::correctLast(const char c) const
 {
     delch();
-    this->printc(c);
+    this->putc(c);
 }
 
 void CursesIO::acceptChar(const char c, stringstream &acc) const

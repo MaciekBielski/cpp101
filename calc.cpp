@@ -6,6 +6,7 @@
  * [-] printing double characters and cleaning line is fucked up
  * [-] refactor
  * [-] emiting token
+ * [-] singleton getInstance() -> initializer_list
  */
 
 #include <iostream>

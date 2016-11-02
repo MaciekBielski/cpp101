@@ -29,8 +29,6 @@ class CursesIO
         explicit CursesIO(const CharSet& charset);
         void clearScreen() const;
         const CursesIO& operator>>( char& c) const;
-        /* to be removed as redundant */
-        void printc(const char c) const { this->putc(c); }
         void acceptChar(const char c, stringstream &acc) const;
         void err(const string& str) const;
         void correctLast(const char c) const;

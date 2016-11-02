@@ -115,20 +115,15 @@ void Token::parseInput(const CursesIO &io)
     static stringstream valAcc {};
     static stringstream opAcc {};
     const CharSet& chSet = io.getCharSet();
-    bool hasDot = false;
+    bool hasDot {false};
 
     /* First charcter of input: ")*+/" are ignored at the beginning */ 
     char first;
     io >> first;
     if( chSet.isVal(first) )
-    {
         firstCharOfVal(first, hasDot, valAcc, io);
-    }
     else if ( first == '(' )
-    {
-        opAcc << first;
-        io.printc(first);
-    }
+        io.acceptChar(first, opAcc);
 
     /* 2nd and further characters */
     for(char c; io >> c;)
@@ -167,6 +162,5 @@ void Token::parseInput(const CursesIO &io)
                 opAfterOp(c, opAcc, io);
             }
         }
-        io.printc(c);
     }
 }
