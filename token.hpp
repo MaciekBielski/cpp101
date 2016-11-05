@@ -9,6 +9,7 @@ using namespace std;
 class Token
 {
     public:
+        Token() = delete;
         static void parseInput( const CursesIO& io);
 };
 

@@ -7,6 +7,10 @@ CursesIO::CursesIO(const CharSet& charset):
 {
     wresize(stdscr, LINES-DBGTOP-1, COLS);
     dbgw = newwin(DBGLEN, COLS,DBGTOP,0);
+    pad = newpad(PADLEN, COLS-4);
+    
+    //scrollok(dbgw, true);
+    /* Create the pad */
 }
 
 CursesIO::~CursesIO()
@@ -73,14 +77,21 @@ void CursesIO::acceptChar(const char c, stringstream &acc) const
     err(string{ c });
 }
 
-/* This needs to be worked on */
+/*
+ * After all new window is just for the box, PAD is relative to screen
+ * coordinates
+ */
 void CursesIO::err(const string& str) const
 {
-    static int8_t errOffset = DBGBOTTOM;
+    static uint16_t padCurr = 0;
+    static uint16_t padTop = 0;
 
-    mvwprintw( dbgw, errOffset, 2,str.c_str() );
-    wrefresh(dbgw);
-    errOffset = ( (errOffset +1 - DBGBOTTOM) % (DBGLEN - 1 - DBGBOTTOM)) + DBGBOTTOM;
-
-    //touchDefault();
+    //  mvwprintw( dbgw, errOffset, 2,str.c_str() );
+    //  wrefresh(dbgw);
+    mvwprintw(pad, padCurr, 0, str.c_str() );
+    prefresh(pad, padTop, 0, DBGFIRST, 2, DBGLAST, COLS-2 );
+    padCurr = (padCurr +1) % PADLEN;
+    if(0 == padCurr)
+        wclear(pad);
+    padTop = (padCurr > DBGINNER) ? padCurr - DBGINNER : 0 ;
 }

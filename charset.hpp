@@ -10,12 +10,13 @@ using namespace std;
 class CharSet
 {
     private:
-        string valueChars  = {"0123456789."};
-        string op1Chars    = {"+-"};
-        string op2Chars    = {"*/"};
-        string op3Chars    = {"()"};
+        string valueChars  = "0123456789.";
+        string op1Chars    = "+-";
+        string op2Chars    = "*/";
+        string op3Chars    = "()";
         /* the only constructor */
         CharSet(){};
+        CharSet( const CharSet& ){} //private copy constructor to prevent copying
     public:
         const set<char> vals { valueChars.cbegin(), valueChars.cend() };
         const set<char> addSub { op1Chars.cbegin(), op1Chars.cend() };

@@ -13,7 +13,10 @@ extern const int CENTERY;
 extern const int CENTERX;
 extern const int DBGTOP;
 extern const int DBGLEN;
-extern const size_t DBGBOTTOM;
+extern const int PADLEN;
+extern const int DBGFIRST;
+extern const int DBGINNER;
+extern const int DBGLAST;
 
 class CursesIO
 {
@@ -23,10 +26,11 @@ class CursesIO
         const function<void(char)> putc = nullptr;
         const CharSet &chSet;
         WINDOW *dbgw = nullptr;
+        WINDOW *pad = nullptr;
     public:
         CursesIO() = delete;
-        ~CursesIO();
         explicit CursesIO(const CharSet& charset);
+        virtual ~CursesIO();
         void clearScreen() const;
         const CursesIO& operator>>( char& c) const;
         void acceptChar(const char c, stringstream &acc) const;
