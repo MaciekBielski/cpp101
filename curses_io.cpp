@@ -2,27 +2,22 @@
 
 using namespace std;
 
+/* debug window is below stdscr and has a pan behind for scrolling emulation,
+ * input window is nested within stdscr
+ */
 CursesIO::CursesIO(const CharSet& charset):
-    getc{getch}, putc{addch}, chSet{charset}
+    getc{getch}, putc{waddch}, chSet{charset}
 {
-    wresize(stdscr, LINES-DBGTOP-1, COLS);
+    wresize(stdscr, LINES-1-DBGTOP, COLS);
+    in = newwin(INLINES, COLS-4, DBGTOP-1-INLINES, 2);
     dbgw = newwin(DBGLEN, COLS,DBGTOP,0);
     pad = newpad(PADLEN, COLS-4);
-    
-    //scrollok(dbgw, true);
-    /* Create the pad */
 }
 
 CursesIO::~CursesIO()
 {
+    delwin(in);
     delwin(dbgw);
-}
-
-static void touchDefault()
-{
-    move(DBGTOP-2, 2);
-    printw("= ");
-    refresh();
 }
 
 void CursesIO::clearScreen() const
@@ -30,13 +25,11 @@ void CursesIO::clearScreen() const
     clear();
     box(stdscr,0,0);
     refresh();
-    curs_set('_');
     wclear(dbgw);
     box(dbgw,0,0);
     wrefresh(dbgw);
-    touchDefault();
-    //mvwprintw(dbgw,1, 2,"TEST");
-    //wrefresh(dbgw);
+    wprintw(in,"= ");
+    wrefresh(in);
 }
 
 /* Validate input characters wrt predefined sets */
@@ -63,18 +56,27 @@ const CursesIO& CursesIO::operator>>( char& c ) const
     return *this;
 }
 
-/* Removes last charcter under the cursor and replaces with c */
-void CursesIO::correctLast(const char c) const
+/* Moves the cursor to previous position, removes last charcter under the
+ * cursor and replaces with c */
+void CursesIO::correctLast(const char * const c) const
 {
-    delch();
-    this->putc(c);
+    int currY {0}, currX {0};
+    getyx(in, currY, currX);
+    if(currX == 0)
+        wmove(in, currY-1, COLS-4-1);
+    else
+        wmove(in, currY, currX-1);
+    wclrtoeol(in);
+    if(c)
+        this->putc(in, *c);
+    wrefresh(in);
 }
 
 void CursesIO::acceptChar(const char c, stringstream &acc) const
 {
     acc << c;
-    this->putc(c);
-    err(string{ c });
+    this->putc(in, c);
+    wrefresh(in);
 }
 
 /*
@@ -86,12 +88,11 @@ void CursesIO::err(const string& str) const
     static uint16_t padCurr = 0;
     static uint16_t padTop = 0;
 
-    //  mvwprintw( dbgw, errOffset, 2,str.c_str() );
-    //  wrefresh(dbgw);
     mvwprintw(pad, padCurr, 0, str.c_str() );
     prefresh(pad, padTop, 0, DBGFIRST, 2, DBGLAST, COLS-2 );
     padCurr = (padCurr +1) % PADLEN;
     if(0 == padCurr)
         wclear(pad);
     padTop = (padCurr > DBGINNER) ? padCurr - DBGINNER : 0 ;
+    wrefresh(in);
 }

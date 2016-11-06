@@ -2,10 +2,9 @@
  * Simple calculator
  *
  * TODO:
- * [-] multiline input window
- * [-] printing double characters and cleaning line is fucked up
- * [-] refactor
+ * [-] brackets counting
  * [-] emiting token
+ * [-] refactor
  * [-] singleton getInstance() -> initializer_list
  */
 
@@ -26,6 +25,7 @@ const int DBGINNER  {DBGLEN-3} ;
 const int PADLEN    {DBGINNER*3};
 const int DBGFIRST  {DBGTOP + 1};
 const int DBGLAST   {DBGTOP + DBGINNER + 1};
+const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
 /*
  * Main
  */

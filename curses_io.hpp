@@ -17,14 +17,16 @@ extern const int PADLEN;
 extern const int DBGFIRST;
 extern const int DBGINNER;
 extern const int DBGLAST;
+extern const int INLINES;
 
 class CursesIO
 {
     private: 
         bool validChar(char k) const;
         const function<char()> getc = nullptr;
-        const function<void(char)> putc = nullptr;
+        const function<void(WINDOW *, char)> putc = nullptr;
         const CharSet &chSet;
+        WINDOW *in = nullptr;
         WINDOW *dbgw = nullptr;
         WINDOW *pad = nullptr;
     public:
@@ -35,7 +37,7 @@ class CursesIO
         const CursesIO& operator>>( char& c) const;
         void acceptChar(const char c, stringstream &acc) const;
         void err(const string& str) const;
-        void correctLast(const char c) const;
+        void correctLast(const char * const c = nullptr) const;
         /* conversion to bool */
         operator bool( ) const { return true; }
         inline const CharSet& getCharSet() const { return this->chSet; }
