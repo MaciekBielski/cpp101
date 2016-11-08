@@ -1,4 +1,4 @@
-#include "token.hpp"
+#include "token_stream.hpp"
 
 /*
  * CursesIO::operator>> performs already basic filtering so only characters
@@ -136,7 +136,7 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
  * Accummulators are keeping what will be emited as a token but have nothing in
  * common with the screen
  */
-void Token::parseInput(const CursesIO &io)
+void TokenStream::parseInput(const CursesIO &io)
 {
     static stringstream valAcc {};
     static stringstream opAcc {};
@@ -170,8 +170,6 @@ void Token::parseInput(const CursesIO &io)
             /* first character for this value */
             if( opAcc.rdbuf()->in_avail() > 0 )
             {
-                // XXX: emit should be invoked from firstCharOfVal after it
-                // will become method
                 emit(io, opAcc);
                 /* again, .234 -> 0.234 */
                 firstCharOfVal(c, hasDot, valAcc, io);
@@ -179,7 +177,6 @@ void Token::parseInput(const CursesIO &io)
             else /* non-first char for this value */
             {
                 notFirstCharOfVal(c, hasDot, valAcc, io);
-                //TODO: what about emit
             }
         }
         else

@@ -9,7 +9,7 @@ CursesIO::CursesIO(const CharSet& charset):
     getc{getch}, putc{waddch}, chSet{charset}
 {
     wresize(stdscr, LINES-1-DBGTOP, COLS);
-    in = newwin(INLINES, COLS-4, DBGTOP-1-INLINES, 2);
+    in = newwin(INLINES, COLS-4, DBGTOP-2-INLINES, 2);
     dbgw = newwin(DBGLEN, COLS,DBGTOP,0);
     pad = newpad(PADLEN, COLS-4);
 }

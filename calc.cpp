@@ -2,16 +2,17 @@
  * Simple calculator
  *
  * TODO:
- * [-] brackets counting
- * [-] emiting token
+ * [-] emiting tokens in one thread, consuming in the other
+ * [-] consuming as an iterator
  * [-] refactor
+ * [-] issue with negative values
  * [-] singleton getInstance() -> initializer_list
  */
 
 #include <iostream>
 #include <ncurses.h>
 
-#include "token.hpp"
+#include "token_stream.hpp"
 #include "curses_io.hpp"
 #include "charset.hpp"
 
@@ -33,7 +34,7 @@ int main()
 {
     CursesIO io{ CharSet::getInstance() };
     io.clearScreen();
-    Token::parseInput(io);
+    TokenStream::parseInput(io);
 
     return 0;
 }

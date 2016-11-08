@@ -1,16 +1,15 @@
-#ifndef TOKEN_HPP
-#define TOKEN_HPP
+#ifndef TOKENSTREAM_HPP
+#define TOKENSTREAM_HPP
 
 #include <iostream>
 #include <sstream>
 #include "curses_io.hpp"
 using namespace std;
 
-class Token
+class TokenStream
 {
     public:
-        Token() = delete;
         static void parseInput( const CursesIO& io);
 };
 
-#endif /* TOKEN_HPP */
+#endif
