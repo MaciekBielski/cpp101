@@ -1,5 +1,6 @@
 #include "curses_io.hpp"
 
+
 using namespace std;
 
 /* debug window is below stdscr and has a pan behind for scrolling emulation,

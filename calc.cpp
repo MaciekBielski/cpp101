@@ -2,6 +2,8 @@
  * Simple calculator
  *
  * TODO:
+ * [-] threads
+ * [-] I/O of Tokens
  * [-] emiting tokens in one thread, consuming in the other
  * [-] consuming as an iterator
  * [-] refactor

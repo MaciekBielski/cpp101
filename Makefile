@@ -1,7 +1,7 @@
 
 ROOT		= /opt/clang_llvm_3.9.0
 CXX			= $(ROOT)/bin/clang++
-CXXFLAGS	= -fcolor-diagnostics -std=c++14 -Wall -Wpedantic
+CXXFLAGS	= -fcolor-diagnostics -std=c++14 -stdlib=libc++ -Wall -Wpedantic
 LDFLAGS		= -lncurses
 TARGET		= calc
 

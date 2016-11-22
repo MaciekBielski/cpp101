@@ -1,10 +1,10 @@
-#ifndef CURSES_IO_HPP
-#define CURSES_IO_HPP
+#pragma once
 
-#include <iostream>
 #include <functional>
-#include <sstream>
+#include <iostream>
 #include <ncurses.h>
+#include <sstream>
+
 #include "charset.hpp"
 
 using namespace std;
@@ -42,5 +42,3 @@ class CursesIO
         operator bool( ) const { return true; }
         inline const CharSet& getCharSet() const { return this->chSet; }
 };
-
-#endif /*CURSES_IO_HPP */

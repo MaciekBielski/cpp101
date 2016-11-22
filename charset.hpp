@@ -1,5 +1,4 @@
-#ifndef CHARSET_HPP
-#define CHARSET_HPP
+#pragma once
 
 #include <string>
 #include <set>
@@ -53,5 +52,3 @@ inline bool CharSet::isBracket(const char &c) const
 {
    return ( brackets.find(c) != brackets.end() );
 }
-
-#endif /*CHARSET_HPP*/

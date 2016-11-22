@@ -1,5 +1,4 @@
-#ifndef TOKENSTREAM_HPP
-#define TOKENSTREAM_HPP
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -11,5 +10,3 @@ class TokenStream
     public:
         static void parseInput( const CursesIO& io);
 };
-
-#endif
