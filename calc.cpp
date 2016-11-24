@@ -34,7 +34,8 @@ const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
  */
 int main()
 {
-    CursesIO io{ CharSet::getInstance() };
+    auto io = CursesIO{};
+    io.setupWindows();
     io.clearScreen();
     TokenStream::parseInput(io);
 

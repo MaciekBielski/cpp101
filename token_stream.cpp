@@ -68,7 +68,7 @@ static inline void correctPrevChar(char c, stringstream &acc)
 //XXX: here, the 'c' type should be statically setup to be 'Op', instead of char
 //XXX: differentiate opAcc vs valAcc at least by name
 static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
-        uint16_t &openBrackets)
+        unsigned int &openBrackets)
 {
     /* [+] If prev was '/+-*' - accept '(', correct if '/+-*', ignore ')' */
     /* [+] If prev was '(' - accept '(', ignore '/+-*)' */
@@ -138,11 +138,17 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
  */
 void TokenStream::parseInput(const CursesIO &io)
 {
-    static stringstream valAcc {};
-    static stringstream opAcc {};
+    //  static stringstream valAcc {};
+    //  static stringstream opAcc {};
+    //  const CharSet& chSet = io.getCharSet();
+    //  bool hasDot {false}, getFirst {true};
+    //  unsigned int openBrackets {0};
+    
     const CharSet& chSet = io.getCharSet();
-    bool hasDot {false}, getFirst {true};
-    uint16_t openBrackets {0};
+    static auto valAcc = stringstream{};
+    static auto opAcc = stringstream{};
+    auto hasDot = false, getFirst = true;
+    auto openBrackets = 0u;
 
     /* First charcter of input: ")*+/" are ignored at the beginning */ 
     char first;
@@ -181,7 +187,10 @@ void TokenStream::parseInput(const CursesIO &io)
         }
         else
         {
+            //io.err("nonval: " + string{c} + "\n"s);
+            io.err(to_string(valAcc.rdbuf()->in_avail()));
             /* previous character was a digit - '(' is ignored */
+            //FIXME: this in_avail tricks does not work
             if( valAcc.rdbuf()->in_avail() > 0 && c != '(' )
             {
                 /* if ')', then check if bracket allowed */

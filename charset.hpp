@@ -5,7 +5,6 @@
 
 using namespace std;
 
-/* singleton */
 class CharSet
 {
     private:
@@ -13,10 +12,8 @@ class CharSet
         string op1Chars    = "+-";
         string op2Chars    = "*/";
         string op3Chars    = "()";
-        /* the only constructor */
-        CharSet(){};
-        CharSet( const CharSet& ){} //private copy constructor to prevent copying
     public:
+        CharSet() = default;
         const set<char> vals { valueChars.cbegin(), valueChars.cend() };
         const set<char> addSub { op1Chars.cbegin(), op1Chars.cend() };
         const set<char> mulDiv { op2Chars.cbegin(), op2Chars.cend() };
@@ -25,11 +22,6 @@ class CharSet
         inline bool isAddOrSub(const char &c) const;
         inline bool isMulOrDiv(const char &c) const;
         inline bool isBracket(const char &c) const;
-
-        static const CharSet& getInstance() {
-            static const CharSet instance{};
-            return instance;
-        }
 };
 
 

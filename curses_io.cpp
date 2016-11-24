@@ -6,14 +6,14 @@ using namespace std;
 /* debug window is below stdscr and has a pan behind for scrolling emulation,
  * input window is nested within stdscr
  */
-CursesIO::CursesIO(const CharSet& charset):
-    getc{getch}, putc{waddch}, chSet{charset}
-{
-    wresize(stdscr, LINES-1-DBGTOP, COLS);
-    in = newwin(INLINES, COLS-4, DBGTOP-2-INLINES, 2);
-    dbgw = newwin(DBGLEN, COLS,DBGTOP,0);
-    pad = newpad(PADLEN, COLS-4);
-}
+CursesIO::CursesIO():
+    getc{getch}, putc{waddch}
+{}
+
+CursesIO::CursesIO(CursesIO&& rhs) noexcept :
+    getc{move(rhs.getc)}, putc{move(rhs.putc)}, in{move(rhs.in)},
+    dbgw{move(rhs.dbgw)}, pad{move(rhs.pad)}, chSet{CharSet()}
+{ }
 
 CursesIO::~CursesIO()
 {
@@ -33,6 +33,14 @@ void CursesIO::clearScreen() const
     wrefresh(in);
 }
 
+void CursesIO::setupWindows()
+{
+    wresize(stdscr, LINES-1-DBGTOP, COLS);
+    in = newwin(INLINES, COLS-4, DBGTOP-2-INLINES, 2);
+    dbgw = newwin(DBGLEN, COLS,DBGTOP,0);
+    pad = newpad(PADLEN, COLS-4);
+}
+
 /* Validate input characters wrt predefined sets */
 bool CursesIO::validChar(char k) const
 {
@@ -48,10 +56,11 @@ bool CursesIO::validChar(char k) const
  */
 const CursesIO& CursesIO::operator>>( char& c ) const
 {
-    char tmp {0};
+    //auto tmp = char{0};
+    char tmp{0};
     do{
         tmp = this->getc();
-    }while( !validChar(tmp));
+    }while( !validChar(tmp) );
     c = tmp;
 
     return *this;
@@ -86,8 +95,8 @@ void CursesIO::acceptChar(const char c, stringstream &acc) const
  */
 void CursesIO::err(const string& str) const
 {
-    static uint16_t padCurr = 0;
-    static uint16_t padTop = 0;
+    static unsigned int padCurr = 0;
+    static unsigned int padTop = 0;
 
     mvwprintw(pad, padCurr, 0, str.c_str() );
     prefresh(pad, padTop, 0, DBGFIRST, 2, DBGLAST, COLS-2 );
