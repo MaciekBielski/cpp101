@@ -19,11 +19,31 @@ static void emit(const CursesIO &io, stringstream &acc)
     acc.clear();
 }
 
+static bool valAfterCloseBracket(stringstream& opAcc)
+{
+    bool out = false;
+
+    opAcc.seekg(-1, ios::basic_ios::end);
+    if (opAcc.peek() == ')')
+        out = true;
+    opAcc.seekg(0, ios::basic_ios::end);
+
+    return out;
+}
+
 static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
         const CursesIO &io, stringstream *toEmit = nullptr)
 {
+    /* we are sure here that 'first' isVal, ignore it if after ')' */
+    if (toEmit != nullptr && valAfterCloseBracket(*toEmit) )
+    {
+        io.err("Ignored "s + first + " after )");
+        return;
+    }
+
     if (toEmit != nullptr)
         emit(io, *toEmit);
+
     if (first == '.')
     {
         hasDot = true;
@@ -184,6 +204,7 @@ void TokenStream::parseInput(const CursesIO &io)
         else
         {
             /* previous character was a digit - '(' is ignored */
+            //this should be absorbed by firstOpAfterVal
             if( !valAcc.str().empty() && c != '(' )
             {
                 /* if ')', then check if bracket allowed */
