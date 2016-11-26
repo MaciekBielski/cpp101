@@ -42,10 +42,29 @@ static void notFirstCharOfVal(const char c, bool &hasDot,
     io.acceptChar( c, acc);
 }
 
+/* updates both stream and screen*/
+static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
+{
+    valAcc.seekg(-1, ios::basic_ios::end);
+    if (valAcc.peek() == '.')
+    {
+        valAcc.get();           // stream correction
+        io.correctLast();       // output correction
+        io.err("Trailing dot removed");
+    }
+    valAcc.seekg(0, ios::basic_ios::end);
+}
+
 /* '(' has been already checked for */
 static void firstOpAfterVal(const char c, bool &hasDot,
-        stringstream &acc, const CursesIO &io)
+        stringstream &acc, const CursesIO &io, stringstream *toEmit = nullptr)
 {
+    if (toEmit != nullptr)
+    {
+        // TODO: erase trailing dot also from the acc
+        eraseIfTrailingDot(io, *toEmit);
+        emit(io, *toEmit);
+    }
     hasDot = false;
     io.acceptChar( c, acc);
 }
@@ -120,19 +139,6 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 
 }
 
-/* updates both stream and screen*/
-static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
-{
-    valAcc.seekg(-1, ios::basic_ios::end);
-    if (valAcc.peek() == '.')
-    {
-        valAcc.get();           // stream correction
-        io.correctLast();       // output correction
-        io.err("Trailing dot removed");
-    }
-    valAcc.seekg(0, ios::basic_ios::end);
-}
-
 /*
  * This should filter whatever cannot be printed on screen during typing
  * Accummulators are keeping what will be emited as a token but have nothing in
@@ -192,12 +198,7 @@ void TokenStream::parseInput(const CursesIO &io)
                     else
                         continue;
                 }
-
-                // XXX: emit should be invoked from firstOpAfterVal after it
-                // will become method
-                eraseIfTrailingDot(io, valAcc);
-                emit(io, valAcc);
-                firstOpAfterVal(c, hasDot, opAcc, io);
+                firstOpAfterVal(c, hasDot, opAcc, io, &valAcc);
             }
             /* operator following another operator, */
             else if( !opAcc.str().empty() > 0 )
