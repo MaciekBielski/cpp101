@@ -48,8 +48,10 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
     valAcc.seekg(-1, ios::basic_ios::end);
     if (valAcc.peek() == '.')
     {
-        valAcc.get();           // stream correction
-        io.correctLast();       // output correction
+        auto s = valAcc.str();
+        s.pop_back();
+        valAcc.str(s);
+        io.correctLast();                      // output correction
         io.err("Trailing dot removed");
     }
     valAcc.seekg(0, ios::basic_ios::end);
@@ -146,12 +148,6 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
  */
 void TokenStream::parseInput(const CursesIO &io)
 {
-    //  static stringstream valAcc {};
-    //  static stringstream opAcc {};
-    //  const CharSet& chSet = io.getCharSet();
-    //  bool hasDot {false}, getFirst {true};
-    //  unsigned int openBrackets {0};
-    
     static auto valAcc = stringstream{};
     static auto opAcc = stringstream{};
     auto hasDot = false, getFirst = true;
