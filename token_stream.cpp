@@ -19,15 +19,17 @@ static void emit(const CursesIO &io, stringstream &acc)
     acc.clear();
 }
 
-static void firstCharOfVal(const char first, bool &hasDot, stringstream &acc,
-        const CursesIO &io)
+static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
+        const CursesIO &io, stringstream *toEmit = nullptr)
 {
-    if(first == '.')
+    if (toEmit != nullptr)
+        emit(io, *toEmit);
+    if (first == '.')
     {
         hasDot = true;
-        io.acceptChar('0', acc);
+        io.acceptChar('0', inAcc);
     }
-    io.acceptChar( first, acc);
+    io.acceptChar( first, inAcc);
 }
 
 static void notFirstCharOfVal(const char c, bool &hasDot,
@@ -173,17 +175,9 @@ void TokenStream::parseInput(const CursesIO &io)
     {
         if( chSet.isVal(c) )
         {
-            /* first character for this value */
-            if( !opAcc.str().empty() )
-            {
-                emit(io, opAcc);
-                /* again, .234 -> 0.234 */
-                firstCharOfVal(c, hasDot, valAcc, io);
-            }
-            else /* non-first char for this value */
-            {
-                notFirstCharOfVal(c, hasDot, valAcc, io);
-            }
+            opAcc.str().empty() ?
+                notFirstCharOfVal(c, hasDot, valAcc, io) :
+                firstCharOfVal(c, hasDot, valAcc, io, &opAcc);
         }
         else
         {
