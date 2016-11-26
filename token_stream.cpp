@@ -14,7 +14,7 @@
 static void emit(const CursesIO &io, stringstream &acc)
 {
     //TODO: check for stupid corrections of a last sign
-    io.err("Emit: "+acc.str());
+    io.err("Emit: "s + acc.str());
     acc.str("");
     acc.clear();
 }
@@ -78,12 +78,22 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
 }
 
 /* '(' has been already checked for */
-static void firstOpAfterVal(const char c, bool &hasDot,
-        stringstream &acc, const CursesIO &io, stringstream *toEmit = nullptr)
+static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
+        const CursesIO &io, uint& openBs, stringstream *toEmit = nullptr)
 {
+    /* if ')', then check if bracket allowed */
+    if (c==')')
+    {
+        if (openBs)
+            --openBs;
+        else
+        {
+            io.err("Bracket not allowed");
+            return;
+        }
+    }
     if (toEmit != nullptr)
     {
-        // TODO: erase trailing dot also from the acc
         eraseIfTrailingDot(io, *toEmit);
         emit(io, *toEmit);
     }
@@ -117,6 +127,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
     /* [+] If prev was '(' - accept '(', ignore '/+-*)' */
     /* [+] If prev was ')' - accept ')/+-*',  ignore '(' */
     /* test it! */
+    /* another bracket control inside */
     const CharSet& chSet = io.getCharSet();
 
     switch(getPrevChar(acc))
@@ -190,39 +201,23 @@ void TokenStream::parseInput(const CursesIO &io)
             getFirst = false;
         }
     } while(getFirst);
-    io.err("First taken");
+    io.err("First valid character taken");
 
     /* 2nd and further characters */
     for(char c; io >> c;)
     {
         if( chSet.isVal(c) )
-        {
             opAcc.str().empty() ?
                 notFirstCharOfVal(c, hasDot, valAcc, io) :
                 firstCharOfVal(c, hasDot, valAcc, io, &opAcc);
-        }
         else
         {
             /* previous character was a digit - '(' is ignored */
-            //this should be absorbed by firstOpAfterVal
             if( !valAcc.str().empty() && c != '(' )
-            {
-                /* if ')', then check if bracket allowed */
-                if( c==')' )
-                {
-                    if(openBrackets)
-                        --openBrackets;
-                    else
-                        continue;
-                }
-                firstOpAfterVal(c, hasDot, opAcc, io, &valAcc);
-            }
+                firstOpAfterVal(c, hasDot, opAcc, io, openBrackets, &valAcc);
             /* operator following another operator, */
             else if( !opAcc.str().empty() > 0 )
-            {
-                /* bracket control inside */
                 opAfterOp(c, opAcc, io, openBrackets);
-            }
         }
     }
 }
