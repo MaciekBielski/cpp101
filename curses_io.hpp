@@ -45,5 +45,5 @@ class CursesIO
         void correctLast(const char * const c = nullptr) const;
         /* conversion to bool */
         operator bool( ) const { return true; }
-        const CharSet& getCharSet() const { return this->chSet; }
+        const CharSet getCharSet() const { return this->chSet; }
 };

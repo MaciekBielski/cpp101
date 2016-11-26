@@ -8,7 +8,6 @@
  * [-] consuming as an iterator
  * [-] refactor
  * [-] issue with negative values
- * [-] singleton getInstance() -> initializer_list
  */
 
 #include <iostream>

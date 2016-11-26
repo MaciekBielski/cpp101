@@ -144,11 +144,11 @@ void TokenStream::parseInput(const CursesIO &io)
     //  bool hasDot {false}, getFirst {true};
     //  unsigned int openBrackets {0};
     
-    const CharSet& chSet = io.getCharSet();
     static auto valAcc = stringstream{};
     static auto opAcc = stringstream{};
     auto hasDot = false, getFirst = true;
     auto openBrackets = 0u;
+    auto chSet = io.getCharSet();
 
     /* First charcter of input: ")*+/" are ignored at the beginning */ 
     char first;
@@ -174,7 +174,7 @@ void TokenStream::parseInput(const CursesIO &io)
         if( chSet.isVal(c) )
         {
             /* first character for this value */
-            if( opAcc.rdbuf()->in_avail() > 0 )
+            if( !opAcc.str().empty() )
             {
                 emit(io, opAcc);
                 /* again, .234 -> 0.234 */
@@ -187,11 +187,8 @@ void TokenStream::parseInput(const CursesIO &io)
         }
         else
         {
-            //io.err("nonval: " + string{c} + "\n"s);
-            io.err(to_string(valAcc.rdbuf()->in_avail()));
             /* previous character was a digit - '(' is ignored */
-            //FIXME: this in_avail tricks does not work
-            if( valAcc.rdbuf()->in_avail() > 0 && c != '(' )
+            if( !valAcc.str().empty() && c != '(' )
             {
                 /* if ')', then check if bracket allowed */
                 if( c==')' )
@@ -209,7 +206,7 @@ void TokenStream::parseInput(const CursesIO &io)
                 firstOpAfterVal(c, hasDot, opAcc, io);
             }
             /* operator following another operator, */
-            else if( opAcc.rdbuf()->in_avail() > 0 )
+            else if( !opAcc.str().empty() > 0 )
             {
                 /* bracket control inside */
                 opAfterOp(c, opAcc, io, openBrackets);
