@@ -2,8 +2,8 @@
  * Simple calculator
  *
  * TODO:
- * [-] threads
- * [-] I/O of Tokens
+ * [-] emitToken synchronize consumer & producer
+ * [-] I/O of Tokens: Operator vs Operands
  * [-] emiting tokens in one thread, consuming in the other
  * [-] consuming as an iterator
  * [-] refactor
@@ -11,11 +11,13 @@
  */
 
 #include <iostream>
+#include <functional>
 #include <ncurses.h>
+#include <thread>
 
-#include "token_stream.hpp"
 #include "curses_io.hpp"
 #include "charset.hpp"
+#include "token_stream.hpp"
 
 /* Globals */
 
@@ -34,10 +36,13 @@ const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
 int main()
 {
     auto io = CursesIO{};
+    auto ts = TokenStream{};
     io.setupWindows();
     io.clearScreen();
-    TokenStream::parseInput(io);
 
+    auto uiThread = thread{ [&ts, &io](){ ts.parseInput(io); } };
+
+    uiThread.join();
     return 0;
 }
 

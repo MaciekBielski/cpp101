@@ -4,12 +4,14 @@
 #include <sstream>
 
 #include "curses_io.hpp"
+#include "token.hpp"
 
 using namespace std;
 using uint = unsigned int;
 
-class TokenStream
-{
+class TokenStream {
+    private:
+        Token emitToken(const CursesIO &io, stringstream &acc);
     public:
-        static void parseInput( const CursesIO& io);
+        void parseInput(const CursesIO& io) const;
 };

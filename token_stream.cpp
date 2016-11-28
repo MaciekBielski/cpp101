@@ -10,10 +10,12 @@
  * about doubled period.
  */
 
-// XXX: this should be made class method
-static void emit(const CursesIO &io, stringstream &acc)
+
+void TokenStream::emitToken(const CursesIO &io, stringstream &acc)
 {
     //TODO: check for stupid corrections of a last sign
+    auto toPass = Token{acc.str()};
+
     io.err("Emit: "s + acc.str());
     acc.str("");
     acc.clear();
@@ -42,7 +44,7 @@ static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
     }
 
     if (toEmit != nullptr)
-        emit(io, *toEmit);
+        emitToken(io, *toEmit);
 
     if (first == '.')
     {
@@ -95,7 +97,7 @@ static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
     if (toEmit != nullptr)
     {
         eraseIfTrailingDot(io, *toEmit);
-        emit(io, *toEmit);
+        emitToken(io, *toEmit);
     }
     hasDot = false;
     io.acceptChar( c, acc);
@@ -145,7 +147,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
             else if( c == '(' )
             {
                 ++openBrackets;
-                emit(io, acc);
+                emitToken(io, acc);
                 io.acceptChar(c, acc);
             }
             break;
@@ -153,7 +155,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
             if( c == '(' )
             {
                 ++openBrackets;
-                emit(io, acc);
+                emitToken(io, acc);
                 io.acceptChar(c, acc);
             }
             break;
@@ -164,7 +166,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
             {
                 if( c==')' )
                     --openBrackets;
-                emit(io, acc);
+                emitToken(io, acc);
                 io.acceptChar(c, acc);
             }
             break;
@@ -177,7 +179,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
  * Accummulators are keeping what will be emited as a token but have nothing in
  * common with the screen
  */
-void TokenStream::parseInput(const CursesIO &io)
+void TokenStream::parseInput(const CursesIO &io) const
 {
     static auto valAcc = stringstream{};
     static auto opAcc = stringstream{};

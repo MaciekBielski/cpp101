@@ -2,7 +2,7 @@
 ROOT		= /opt/clang_llvm_3.9.0
 CXX			= $(ROOT)/bin/clang++
 CXXFLAGS	= -fcolor-diagnostics -std=c++14 -stdlib=libc++ -Wall -Wpedantic
-LDFLAGS		= -lncurses
+LDFLAGS		= -lncurses -lpthread
 TARGET		= calc
 
 .PHONY: clean
