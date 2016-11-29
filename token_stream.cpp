@@ -10,13 +10,14 @@
  * about doubled period.
  */
 
-
-void TokenStream::emitToken(const CursesIO &io, stringstream &acc)
+/* Takes stringstream's last character to decide the type of a token */
+static void emitToken(const CursesIO &io, stringstream &acc)
 {
-    //TODO: check for stupid corrections of a last sign
-    auto toPass = Token{acc.str()};
+    //auto toPass = Token{acc.str()};
+    auto c = static_cast<char>(acc.seekg(-1, ios::basic_ios::end).peek());
+    acc.seekg(0, ios::basic_ios::end);
 
-    io.err("Emit: "s + acc.str());
+    io.err("Emit: "s + acc.str() + "last char:"s + c);
     acc.str("");
     acc.clear();
 }
@@ -178,6 +179,10 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
  * This should filter whatever cannot be printed on screen during typing
  * Accummulators are keeping what will be emited as a token but have nothing in
  * common with the screen
+ *
+ * - firstCharOfVal
+ * - firstOpAfterVal
+ *   - createToken must do same cleanup as emitToken now
  */
 void TokenStream::parseInput(const CursesIO &io) const
 {

@@ -1,4 +1,4 @@
 #include "token.hpp"
 
-Token::Token(const string r): raw{r}
+Token::Token(const string& r): raw{r}
 {}
