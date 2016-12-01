@@ -1,5 +1,6 @@
 #include "token_stream.hpp"
 
+#include <memory>
 /*
  * CursesIO::operator>> performs already basic filtering so only characters
  * from predefined charset are returned at this level.
@@ -14,21 +15,19 @@
  * Takes stringstream's last character to decide the type of a token.
  * TODO: Return unique_ptr to the Token.
  */
-static Token emitToken(const CursesIO &io, stringstream &acc)
+static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 {
     //auto toPass = Token{acc.str()};
     auto c = static_cast<char>(acc.seekg(-1, ios::basic_ios::end).peek());
     acc.seekg(0, ios::basic_ios::end);
 
-    auto tokenFactory = [c](auto &chSet, auto &str) const {
-        switch(c) {
-            case chSet.isVal(c):
-                return ValToken(str);
-            case chSet.isAddOrSub(c):
-            case chSet.isMulOrDiv(c):
-            case chSet.isBracket(c):
-                return OpToken(str);
-        };
+    auto tokenFactory = [c](auto &chSet, auto str) {
+            if (chSet.isVal(c))
+                return unique_ptr<Token>{ make_unique<ValToken>(str) };
+            else if ( chSet.isAddOrSub(c) ||
+                    chSet.isMulOrDiv(c) ||
+                    chSet.isBracket(c))
+                return unique_ptr<Token>{ make_unique<OpToken>(str) };
     };
 
     auto outToken = tokenFactory(io.getCharSet(), acc.str());
@@ -55,7 +54,8 @@ static bool valAfterCloseBracket(stringstream& opAcc)
 /* TODO: Does not always emit. Value should be returned by optional pointer
  */
 static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
-        const CursesIO &io, stringstream *toEmit = nullptr)
+        const CursesIO &io, unique_ptr<Token> *emited = nullptr,
+        stringstream *toEmit = nullptr)
 {
     /* we are sure here that 'first' isVal, ignore it if after ')' */
     if (toEmit != nullptr && valAfterCloseBracket(*toEmit) )
@@ -65,7 +65,7 @@ static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
     }
 
     if (toEmit != nullptr)
-         emitToken(io, *toEmit);
+         *emited = emitToken(io, *toEmit);
 
     if (first == '.')
     {
@@ -101,8 +101,9 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
 }
 
 /* '(' has been already checked for */
-static Token firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
-        const CursesIO &io, uint& openBs, stringstream *toEmit = nullptr)
+static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
+        const CursesIO &io, uint& openBs, unique_ptr<Token> &token,
+        stringstream *toEmit = nullptr)
 {
     /* if ')', then check if bracket allowed */
     if (c==')')
@@ -118,7 +119,7 @@ static Token firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
     if (toEmit != nullptr)
     {
         eraseIfTrailingDot(io, *toEmit);
-        emitToken(io, *toEmit);
+        token = emitToken(io, *toEmit);
     }
     hasDot = false;
     io.acceptChar( c, acc);
@@ -144,7 +145,7 @@ static inline void correctPrevChar(char c, stringstream &acc)
 //XXX: here, the 'c' type should be statically setup to be 'Op', instead of char
 //XXX: differentiate opAcc vs valAcc at least by name
 static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
-        unsigned int &openBrackets)
+        unsigned int &openBrackets, unique_ptr<Token> &emited)
 {
     /* [+] If prev was '/+-*' - accept '(', correct if '/+-*', ignore ')' */
     /* [+] If prev was '(' - accept '(', ignore '/+-*)' */
@@ -168,7 +169,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
             else if( c == '(' )
             {
                 ++openBrackets;
-                emitToken(io, acc);
+                emited = emitToken(io, acc);
                 io.acceptChar(c, acc);
             }
             break;
@@ -176,7 +177,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
             if( c == '(' )
             {
                 ++openBrackets;
-                emitToken(io, acc);
+                emited = emitToken(io, acc);
                 io.acceptChar(c, acc);
             }
             break;
@@ -187,7 +188,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
             {
                 if( c==')' )
                     --openBrackets;
-                emitToken(io, acc);
+                emited = emitToken(io, acc);
                 io.acceptChar(c, acc);
             }
             break;
@@ -218,6 +219,7 @@ void TokenStream::parseInput(const CursesIO &io) const
         io >> first;
         if( chSet.isVal(first) )
         {
+            //TODO: this function prototype is not so nice
             firstCharOfVal(first, hasDot, valAcc, io);
             getFirst = false;
         }
@@ -233,18 +235,20 @@ void TokenStream::parseInput(const CursesIO &io) const
     /* 2nd and further characters */
     for(char c; io >> c;)
     {
+        unique_ptr<Token> token = nullptr;
+
         if( chSet.isVal(c) )
             opAcc.str().empty() ?
                 notFirstCharOfVal(c, hasDot, valAcc, io) :
-                firstCharOfVal(c, hasDot, valAcc, io, &opAcc);
+                firstCharOfVal(c, hasDot, valAcc, io, &token, &opAcc);
         else
         {
             /* previous character was a digit - '(' is ignored */
             if( !valAcc.str().empty() && c != '(' )
-                firstOpAfterVal(c, hasDot, opAcc, io, openBrackets, &valAcc);
+                firstOpAfterVal(c, hasDot, opAcc, io, openBrackets, token, &valAcc);
             /* operator following another operator, */
             else if( !opAcc.str().empty() > 0 )
-                opAfterOp(c, opAcc, io, openBrackets);
+                opAfterOp(c, opAcc, io, openBrackets, token);
         }
     }
 }
