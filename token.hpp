@@ -6,22 +6,23 @@ using namespace std;
 
 /*
  * This design needs to be rethought.
+ * TODO: all should have move constructors.
  */
 class Token {
     private:
         const string raw;
-    public:
+    protected:
         Token(const string& r);
 };
 
-class Value : public Token {
+class ValToken : public Token {
     private:
         double value = 0;
     public:
-        Val(const string& r);
+        ValToken(const string& r);
 };
 
-class Operator : public Token {
+class OpToken : public Token {
     public:
-        Operator(const string& r);
+        OpToken(const string& r);
 };

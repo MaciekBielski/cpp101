@@ -10,16 +10,34 @@
  * about doubled period.
  */
 
-/* Takes stringstream's last character to decide the type of a token */
-static void emitToken(const CursesIO &io, stringstream &acc)
+/*
+ * Takes stringstream's last character to decide the type of a token.
+ * TODO: Return unique_ptr to the Token.
+ */
+static Token emitToken(const CursesIO &io, stringstream &acc)
 {
     //auto toPass = Token{acc.str()};
     auto c = static_cast<char>(acc.seekg(-1, ios::basic_ios::end).peek());
     acc.seekg(0, ios::basic_ios::end);
 
+    auto tokenFactory = [c](auto &chSet, auto &str) const {
+        switch(c) {
+            case chSet.isVal(c):
+                return ValToken(str);
+            case chSet.isAddOrSub(c):
+            case chSet.isMulOrDiv(c):
+            case chSet.isBracket(c):
+                return OpToken(str);
+        };
+    };
+
+    auto outToken = tokenFactory(io.getCharSet(), acc.str());
+
     io.err("Emit: "s + acc.str() + "last char:"s + c);
     acc.str("");
     acc.clear();
+
+    return outToken;
 }
 
 static bool valAfterCloseBracket(stringstream& opAcc)
@@ -34,6 +52,8 @@ static bool valAfterCloseBracket(stringstream& opAcc)
     return out;
 }
 
+/* TODO: Does not always emit. Value should be returned by optional pointer
+ */
 static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
         const CursesIO &io, stringstream *toEmit = nullptr)
 {
@@ -45,7 +65,7 @@ static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
     }
 
     if (toEmit != nullptr)
-        emitToken(io, *toEmit);
+         emitToken(io, *toEmit);
 
     if (first == '.')
     {
@@ -81,7 +101,7 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
 }
 
 /* '(' has been already checked for */
-static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
+static Token firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
         const CursesIO &io, uint& openBs, stringstream *toEmit = nullptr)
 {
     /* if ')', then check if bracket allowed */
