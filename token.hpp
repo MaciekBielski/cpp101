@@ -9,20 +9,29 @@ using namespace std;
  * TODO: all should have move constructors.
  */
 class Token {
-    private:
-        const string raw;
     protected:
+        const string raw;
         Token(const string& r);
+    public:
+        virtual ~Token() {};
+
+        virtual operator string() = 0;
 };
 
-class ValToken : public Token {
+class ValToken final : public Token {
     private:
         double value = 0;
     public:
         ValToken(const string& r);
+        ~ValToken(){};
+
+        operator string() override;
 };
 
 class OpToken : public Token {
     public:
         OpToken(const string& r);
+        ~OpToken(){};
+
+        virtual operator string() override;
 };

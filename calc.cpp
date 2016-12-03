@@ -35,12 +35,14 @@ const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
  */
 int main()
 {
+    TokenStream ts{};       //non-copyable, non-movable
     auto io = CursesIO{};
-    auto ts = TokenStream{};
     io.setupWindows();
     io.clearScreen();
 
     auto uiThread = thread{ [&ts, &io](){ ts.parseInput(io); } };
+
+    for( ;;ts.passToken(io) );
 
     uiThread.join();
     return 0;

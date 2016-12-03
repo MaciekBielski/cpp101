@@ -1,6 +1,9 @@
 #include "token_stream.hpp"
 
+#include <cassert>
 #include <memory>
+#include <utility>
+
 /*
  * CursesIO::operator>> performs already basic filtering so only characters
  * from predefined charset are returned at this level.
@@ -22,17 +25,21 @@ static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
     acc.seekg(0, ios::basic_ios::end);
 
     auto tokenFactory = [c](auto &chSet, auto str) {
-            if (chSet.isVal(c))
-                return unique_ptr<Token>{ make_unique<ValToken>(str) };
-            else if ( chSet.isAddOrSub(c) ||
-                    chSet.isMulOrDiv(c) ||
-                    chSet.isBracket(c))
-                return unique_ptr<Token>{ make_unique<OpToken>(str) };
+        unique_ptr<Token> out = nullptr;
+
+        if (chSet.isVal(c))
+            out = make_unique<ValToken>(str);
+        else if ( chSet.isAddOrSub(c) ||
+                chSet.isMulOrDiv(c) ||
+                chSet.isBracket(c) )
+            out = make_unique<OpToken>(str);
+
+        return out;
     };
 
     auto outToken = tokenFactory(io.getCharSet(), acc.str());
 
-    io.err("Emit: "s + acc.str() + "last char:"s + c);
+    io.err("Last char:"s + c);
     acc.str("");
     acc.clear();
 
@@ -201,11 +208,8 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
  * Accummulators are keeping what will be emited as a token but have nothing in
  * common with the screen
  *
- * - firstCharOfVal
- * - firstOpAfterVal
- *   - createToken must do same cleanup as emitToken now
  */
-void TokenStream::parseInput(const CursesIO &io) const
+void TokenStream::parseInput(const CursesIO &io)
 {
     static auto valAcc = stringstream{};
     static auto opAcc = stringstream{};
@@ -235,7 +239,9 @@ void TokenStream::parseInput(const CursesIO &io) const
     /* 2nd and further characters */
     for(char c; io >> c;)
     {
-        unique_ptr<Token> token = nullptr;
+        // sync: wait till token is null
+        unique_lock<mutex> bufLk {bufMtx};
+        bufCv.wait(bufLk, [this]{ return !(this->token); });
 
         if( chSet.isVal(c) )
             opAcc.str().empty() ?
@@ -250,5 +256,31 @@ void TokenStream::parseInput(const CursesIO &io) const
             else if( !opAcc.str().empty() > 0 )
                 opAfterOp(c, opAcc, io, openBrackets, token);
         }
+
+        if(token)
+        {
+            //io.err("Emitted "s + static_cast<string>(*token));
+
+            // sync: wait till token is null
+            bufLk.unlock();
+            bufCv.notify_one();
+            // yield here
+        }
     }
+}
+
+void TokenStream::passToken(const CursesIO &io)
+{
+    // sync: wait till token is not null
+    unique_lock<mutex> bufLock {bufMtx};
+    bufCv.wait(bufLock, [this]{ return !!(this->token); });
+
+    // process the token and nullify it
+    // test that after moving the token indeed is null
+    auto out = std::move(token);
+
+    io.err("Passed: "s + static_cast<string>(*out));
+    assert(!token);
+    // let the parseInput run another iteration
+    bufLock.unlock();
 }
