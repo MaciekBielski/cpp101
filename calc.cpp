@@ -33,17 +33,60 @@ const int DBGFIRST  {DBGTOP + 1};
 const int DBGLAST   {DBGTOP + DBGINNER + 1};
 const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
 
-// TODO; express this as an iterator?
-void getExpression(TokenStream &ts, const CursesIO &io, stack<unique_ptr<Token>> &filo)
+
+//TODO
+//  unique_ptr<Token> getTerm (TokenStream &ts, const CursesIO &io,
+//          stack<unique_ptr<Token>> &filo)
+
+/* Returns with last computed value on the stack */
+void getExpression (TokenStream &ts, const CursesIO &io,
+        stack<unique_ptr<Token>> &filo)
 {
     // stack initialization
-    //  filo.push( make_unique<ValToken>("0"s) );
-    //  filo.push( make_unique<AddSubToken>("+"s) );
+    filo.push( make_unique<ValToken>("0"s) );
+    filo.push( make_unique<AddSubToken>("+"s) );
 
     do {
         auto token = ts.passToken(io);
+        //bool shouldReduce = false;
+
         io.err("Passed: "s + static_cast<string>(*token));
-    } while (true);
+
+        /*
+         * - compute returns true if reduction on current level should be done,
+         *   after returning from nested level,
+         *
+         * - for ValToken compute pushes value on stack and returns false
+         *
+         * - for AddSubToken compute reduces last triple [rval, op, lval] on the
+         *   stack and pushes the result, then pushes the operator and returns
+         *   false:
+         *
+         * - for MulDivToken compute calls getTerm that operates till next
+         *   AddSubToken or =), then it pushes reduced subresult on the stack,
+         *   pushes finishing token and returns true,
+         *   - then getExpression pops the token and reduces again last triple
+         *   according to it, it will be AddSubToken or =)
+         *
+         * - for BracketToken compute does:
+         *   - for ')' should reduce last triple, discard '(' that prepends
+         *   this triple, push reduced value and return false, does not push
+         *   ')'!
+         *   - for '(' pushes it on the stack and calls getExpression that
+         *   finishes with false and result on the stack
+         *
+         * - for '=' it reduces last triple, push the reduced value and returns
+         *   false, does not push '='
+         */
+        while (true) {
+            if (token.compute(ts,io,filo))
+                token = filo.pop();
+            else
+                break;
+        }
+        auto lastToken = static_cast<string>(*token);
+
+    } while ( (lastToken != "="s) && (lastToken != "="s) );
 }
 
 /*
