@@ -29,10 +29,12 @@ static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 
         if (chSet.isVal(c))
             out = make_unique<ValToken>(str);
-        else if ( chSet.isAddOrSub(c) ||
-                chSet.isMulOrDiv(c) ||
-                chSet.isBracket(c) )
-            out = make_unique<OpToken>(str);
+        else if (chSet.isAddOrSub(c))
+            out = make_unique<AddSubToken>(str);
+        else if (chSet.isMulOrDiv(c))
+            out = make_unique<MulDivToken>(str);
+        else if (chSet.isBracket(c))
+            out = make_unique<BracketToken>(str);
 
         return out;
     };
@@ -269,18 +271,18 @@ void TokenStream::parseInput(const CursesIO &io)
     }
 }
 
-void TokenStream::passToken(const CursesIO &io)
+unique_ptr<Token> TokenStream::passToken(const CursesIO &io)
 {
     // sync: wait till token is not null
     unique_lock<mutex> bufLock {bufMtx};
     bufCv.wait(bufLock, [this]{ return !!(this->token); });
 
-    // process the token and nullify it
-    // test that after moving the token indeed is null
+    // move the ownership
     auto out = std::move(token);
 
-    io.err("Passed: "s + static_cast<string>(*out));
     assert(!token);
     // let the parseInput run another iteration
     bufLock.unlock();
+
+    return out;
 }

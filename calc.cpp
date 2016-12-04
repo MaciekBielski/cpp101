@@ -12,8 +12,10 @@
 
 #include <iostream>
 #include <functional>
+#include <memory>
 #include <ncurses.h>
 #include <thread>
+#include <stack>
 
 #include "curses_io.hpp"
 #include "charset.hpp"
@@ -30,6 +32,20 @@ const int PADLEN    {DBGINNER*3};
 const int DBGFIRST  {DBGTOP + 1};
 const int DBGLAST   {DBGTOP + DBGINNER + 1};
 const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
+
+// TODO; express this as an iterator?
+void getExpression(TokenStream &ts, const CursesIO &io, stack<unique_ptr<Token>> &filo)
+{
+    // stack initialization
+    //  filo.push( make_unique<ValToken>("0"s) );
+    //  filo.push( make_unique<AddSubToken>("+"s) );
+
+    do {
+        auto token = ts.passToken(io);
+        io.err("Passed: "s + static_cast<string>(*token));
+    } while (true);
+}
+
 /*
  * Main
  */
@@ -37,12 +53,14 @@ int main()
 {
     TokenStream ts{};       //non-copyable, non-movable
     auto io = CursesIO{};
+
     io.setupWindows();
     io.clearScreen();
 
     auto uiThread = thread{ [&ts, &io](){ ts.parseInput(io); } };
 
-    for( ;;ts.passToken(io) );
+    auto filo = stack<unique_ptr<Token>>{};
+    getExpression(ts, io, filo);
 
     uiThread.join();
     return 0;

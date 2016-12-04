@@ -25,5 +25,5 @@ class TokenStream final {
         ~TokenStream(){};
 
         void parseInput(const CursesIO& io);
-        void passToken(const CursesIO &io);
+        unique_ptr<Token> passToken(const CursesIO &io);
 };

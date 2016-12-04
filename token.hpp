@@ -29,9 +29,25 @@ class ValToken final : public Token {
 };
 
 class OpToken : public Token {
+    protected:
+        OpToken(const string &r);
     public:
-        OpToken(const string& r);
         ~OpToken(){};
 
         virtual operator string() override;
+};
+
+class AddSubToken : public OpToken {
+    public:
+        AddSubToken(const string &r);
+};
+
+class MulDivToken : public OpToken {
+    public:
+        MulDivToken(const string &r);
+};
+
+class BracketToken : public OpToken {
+    public:
+        BracketToken(const string &r);
 };

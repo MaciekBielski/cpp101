@@ -13,7 +13,7 @@ ValToken::operator string()
 {
     return "Value: "s + to_string(value);
 }
-//TODO: interpret last char of a str
+
 OpToken::OpToken(const string& r):
     Token(r)
 {}
@@ -21,4 +21,20 @@ OpToken::OpToken(const string& r):
 OpToken::operator string()
 {
     return "Operator: "s + raw;
+}
+
+
+AddSubToken::AddSubToken(const string &r):
+    OpToken(r)
+{
+}
+
+MulDivToken::MulDivToken(const string &r):
+    OpToken(r)
+{
+}
+
+BracketToken::BracketToken(const string &r):
+    OpToken(r)
+{
 }
