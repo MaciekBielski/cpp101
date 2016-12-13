@@ -1,25 +1,33 @@
 #include "operand.hpp"
 
-Expression::Expression(TokenStack &filo, TokenStream &stream, CursesIO &io):
-    stack{filo}, ts{stream}
+#include "token.hpp"
+#include "token_stream.hpp"
+
+Expression::Expression(TokenStack &filo, TokenStream &stream, CursesIO &cio):
+	stack{filo}, ts{stream}, io{cio}
 {}
 
 /* TODO: Thing about visitor here how to make it short */
-void Expression::compute(const Token &t)
+void Expression::accept(unique_ptr<Token> t)
 {
-    t.compute(*this);
+	t->compute(*this);
 }
 
-void run()
+void Expression::run()
 {
-    stack.push(make_unique<ValToken>("0"s));
-    stack.push(make_unique<AddSubToken>("+"s));
+	stack.push(make_unique<ValToken>("0"s));
+	stack.push(make_unique<AddSubToken>("+"s));
 
-    auto notDone = bool {true};
+	auto done = bool {false};
 
-    do {
-        auto tokenPtr = ts.passToken(io);
-        io.err("Passed: "s + static_cast<string>(*tokenPtr));
-        compute(*tokenPtr);
-    } while ();
+	do {
+		auto tokenPtr = ts.passToken(io);
+		io.err("Passed: "s + static_cast<string>(*tokenPtr));
+		accept(move(tokenPtr));
+	} while (!done);
+}
+
+void Expression::dbg(const string &s)
+{
+	io.err(s);
 }

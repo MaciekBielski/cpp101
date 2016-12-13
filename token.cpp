@@ -1,40 +1,46 @@
 #include "token.hpp"
 
 Token::Token(const string& r):
-    raw{r}
+	raw{r}
 {}
+
+/* TODO: Expression is a visitor that has per-token type methods? */
+void Token::compute(Expression &exp)
+{
+	exp.dbg("Inheritance magic in need here: "s + raw);
+}
 
 /* Becasue of proper filtering string should always be valid double */
 ValToken::ValToken(const string& r):
-    Token(r), value(stod(r)) 
+	Token(r), value(stod(r)) 
 {}
 
 ValToken::operator string()
 {
-    return "Value: "s + to_string(value);
+	return "Value: "s + to_string(value);
 }
 
 OpToken::OpToken(const string& r):
-    Token(r)
+	Token(r)
 {}
 
 OpToken::operator string()
 {
-    return "Operator: "s + raw;
+	return "Operator: "s + raw;
 }
 
 
 AddSubToken::AddSubToken(const string &r):
-    OpToken(r)
+	OpToken(r)
 {
 }
 
 MulDivToken::MulDivToken(const string &r):
-    OpToken(r)
+	OpToken(r)
 {
 }
 
 BracketToken::BracketToken(const string &r):
-    OpToken(r)
+	OpToken(r)
 {
 }
