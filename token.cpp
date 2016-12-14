@@ -4,12 +4,6 @@ Token::Token(const string& r):
 	raw{r}
 {}
 
-/* TODO: Expression is a visitor that has per-token type methods? */
-void Token::compute(Expression &exp)
-{
-	exp.dbg("Inheritance magic in need here: "s + raw);
-}
-
 /* Becasue of proper filtering string should always be valid double */
 ValToken::ValToken(const string& r):
 	Token(r), value(stod(r)) 
@@ -32,15 +26,12 @@ OpToken::operator string()
 
 AddSubToken::AddSubToken(const string &r):
 	OpToken(r)
-{
-}
+{}
 
 MulDivToken::MulDivToken(const string &r):
 	OpToken(r)
-{
-}
+{}
 
 BracketToken::BracketToken(const string &r):
 	OpToken(r)
-{
-}
+{}
