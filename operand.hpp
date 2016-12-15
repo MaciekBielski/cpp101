@@ -18,10 +18,10 @@ using TokenStack = stack<unique_ptr<Token>>;
 class Operand {
 	public:
 		virtual void dbg(const string &s) = 0;
-		virtual void compute(ValToken *val) = 0;
-		virtual void compute(AddSubToken *val)  = 0;
-		virtual void compute(MulDivToken *val)  = 0;
-		virtual void compute(BracketToken *val) = 0;
+		virtual void compute(const ValToken *val) = 0;
+		virtual void compute(const AddSubToken *val)  = 0;
+		virtual void compute(const MulDivToken *val)  = 0;
+		virtual void compute(const BracketToken *val) = 0;
 };
 
 /* TODO: Setup promoters, served and degraders operators */
@@ -31,6 +31,7 @@ class Expression : public Operand {
 		TokenStream &ts;
 		CursesIO &io;
 		unique_ptr<Token> currToken;
+
 	public:
 		Expression() = delete;
 		Expression(TokenStack &filo, TokenStream &stream, CursesIO &io);
@@ -38,8 +39,8 @@ class Expression : public Operand {
 		void accept(Token *t);
 		void run();
 		void dbg(const string &s) override;
-		void compute(ValToken *val) override;
-		void compute(AddSubToken *val)  override;
-		void compute(MulDivToken *val)  override;
-		void compute(BracketToken *val) override;
+		void compute(const ValToken *val) override;
+		void compute(const AddSubToken *val)  override;
+		void compute(const MulDivToken *val)  override;
+		void compute(const BracketToken *val) override;
 };

@@ -12,6 +12,7 @@ class CharSet
 		string op1Chars	= "+-";
 		string op2Chars	= "*/";
 		string op3Chars	= "()";
+
 	public:
 		CharSet() = default;
 		const set<char> vals { valueChars.cbegin(), valueChars.cend() };

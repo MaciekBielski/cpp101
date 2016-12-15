@@ -22,33 +22,39 @@ void Expression::run()
 
 	do {
 		currToken = ts.passToken(io);
-		io.err("Passed: "s + static_cast<string>(*currToken));
+		dbg("Passed: "s + static_cast<string>(*currToken));
 		/* get underlying token */
 		accept(currToken.get());
 	} while (!done);
 }
 
-void Expression::dbg(const string &s)
+inline void Expression::dbg(const string &s) { io.err(s); }
+
+/* Pointers were only for visitor dispatching, real token handler is currToken */
+void Expression::compute(const ValToken *val)
 {
-	io.err(s);
+	/* push the value on stack and return */
+	stack.push(move(currToken));
+	dbg("Pushed "s + static_cast<string>(*val));
 }
 
-void Expression::compute(ValToken *val)
+void Expression::compute(const AddSubToken *val)
 {
-	dbg("ValToken"s);
-}
-
-void Expression::compute(AddSubToken *val)
-{
+	/* reduce and push the operator */
 	dbg("AddSubToken"s);
 }
 
-void Expression::compute(MulDivToken *val)
+void Expression::compute(const MulDivToken *val)
 {
+	/* push the operator and runTerm */
 	dbg("MulDivToken"s);
 }
 
-void Expression::compute(BracketToken *val)
+void Expression::compute(const BracketToken *val)
 {
+	/* runTerm if '(' */
+	/* reduce, discard the operator and return if ')' or '=' */
 	dbg("BracketToken"s);
 }
+
+//TODO: reduce function

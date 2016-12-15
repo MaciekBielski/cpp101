@@ -9,7 +9,7 @@ ValToken::ValToken(const string& r):
 	Token(r), value(stod(r)) 
 {}
 
-ValToken::operator string()
+ValToken::operator string() const
 {
 	return "Value: "s + to_string(value);
 }
@@ -18,7 +18,7 @@ OpToken::OpToken(const string& r):
 	Token(r)
 {}
 
-OpToken::operator string()
+OpToken::operator string() const
 {
 	return "Operator: "s + raw;
 }

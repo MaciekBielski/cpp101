@@ -4,6 +4,7 @@
 
 #include "operand.hpp"
 
+/* trampoline to pass a correct 'this' to visiting Operand */
 #define _compute(Arg) \
 	void compute(Arg &arg) override {	\
 			arg.compute(this); \
@@ -11,10 +12,6 @@
 
 using namespace std;
 
-/*
- * This design needs to be rethought.
- * TODO: all should have move constructors.
- */
 class Token {
 	protected:
 		const string raw;
@@ -22,7 +19,7 @@ class Token {
 	public:
 		virtual ~Token() {};
 
-		virtual operator string() = 0;
+		virtual operator string() const = 0;
 		virtual void compute(Operand &opd) = 0;
 };
 
@@ -35,7 +32,7 @@ class ValToken final : public Token {
 		ValToken(const string& r);
 		~ValToken(){};
 
-		operator string() override;
+		operator string() const override;
 		_compute(Operand);
 };
 
@@ -45,7 +42,7 @@ class OpToken : public Token {
 	public:
 		~OpToken(){};
 
-		virtual operator string() override;
+		virtual operator string() const override;
 };
 
 class AddSubToken : public OpToken {
