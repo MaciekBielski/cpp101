@@ -30,9 +30,11 @@ class ValToken final : public Token {
 		double value = 0;
 	public:
 		ValToken(const string& r);
+		ValToken(const double d);
 		~ValToken(){};
 
 		operator string() const override;
+		double getVal() const;
 		_compute(Operand);
 };
 
@@ -48,17 +50,21 @@ class OpToken : public Token {
 class AddSubToken : public OpToken {
 	public:
 		AddSubToken(const string &r);
+
 		_compute(Operand);
+		operator string() const override { return OpToken::operator string(); };
 };
 
 class MulDivToken : public OpToken {
 	public:
 		MulDivToken(const string &r);
+
 		_compute(Operand);
 };
 
 class BracketToken : public OpToken {
 	public:
 		BracketToken(const string &r);
+
 		_compute(Operand);
 };

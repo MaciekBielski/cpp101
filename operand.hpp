@@ -16,6 +16,8 @@ using namespace std;
 using TokenStack = stack<unique_ptr<Token>>;
 
 class Operand {
+	protected:
+		virtual void reduce() = 0;
 	public:
 		virtual void dbg(const string &s) = 0;
 		virtual void compute(const ValToken *val) = 0;
@@ -31,6 +33,9 @@ class Expression : public Operand {
 		TokenStream &ts;
 		CursesIO &io;
 		unique_ptr<Token> currToken;
+		bool shouldReturn = false;
+
+		void reduce() override;
 
 	public:
 		Expression() = delete;
