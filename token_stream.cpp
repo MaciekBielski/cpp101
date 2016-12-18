@@ -41,7 +41,7 @@ static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 
 	auto outToken = tokenFactory(io.getCharSet(), acc.str());
 
-	io.err("Last char:"s + c);
+	//io.err("Last char:"s + c);
 	acc.str("");
 	acc.clear();
 
@@ -69,7 +69,7 @@ static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
 	/* we are sure here that 'first' isVal, ignore it if after ')' */
 	if (toEmit != nullptr && valAfterCloseBracket(*toEmit) )
 	{
-		io.err("Ignored "s + first + " after )");
+		//io.err("Ignored "s + first + " after )");
 		return;
 	}
 
@@ -104,7 +104,7 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
 		s.pop_back();
 		valAcc.str(s);
 		io.correctLast();					  // output correction
-		io.err("Trailing dot removed");
+		//io.err("Trailing dot removed");
 	}
 	valAcc.seekg(0, ios::basic_ios::end);
 }
@@ -121,7 +121,7 @@ static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
 			--openBs;
 		else
 		{
-			io.err("Bracket not allowed");
+			//io.err("Bracket not allowed");
 			return;
 		}
 	}
@@ -173,7 +173,7 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 			{
 				correctPrevChar(c, acc);
 				io.correctLast(&c);
-				io.err("opAfterOp: CORRECT");
+				//io.err("opAfterOp: CORRECT");
 			}
 			else if( c == '(' )
 			{
@@ -236,7 +236,7 @@ void TokenStream::parseInput(const CursesIO &io)
 			getFirst = false;
 		}
 	} while(getFirst);
-	io.err("First valid character taken");
+	//io.err("First valid character taken");
 
 	/* 2nd and further characters */
 	for(char c; io >> c;)
@@ -273,16 +273,25 @@ void TokenStream::parseInput(const CursesIO &io)
 
 unique_ptr<Token> TokenStream::passToken(const CursesIO &io)
 {
-	// sync: wait till token is not null
-	unique_lock<mutex> bufLock {bufMtx};
-	bufCv.wait(bufLock, [this]{ return !!(this->token); });
+	auto out = unique_ptr<Token>{nullptr};
 
-	// move the ownership
-	auto out = std::move(token);
+	if (lastToken) {
+		io.err("Get cached: "s + static_cast<string>(*lastToken));
+		out = std::move(lastToken);
+		assert(!lastToken);
+	} else {
+		// sync: wait till token is not null
+		unique_lock<mutex> bufLock {bufMtx};
+		bufCv.wait(bufLock, [this]{ return !!(this->token); });
 
-	assert(!token);
-	// let the parseInput run another iteration
-	bufLock.unlock();
+		// move the ownership
+		out = std::move(token);
+		io.err("Get new: "s + static_cast<string>(*out));
+
+		assert(!token);
+		// let the parseInput run another iteration
+		bufLock.unlock();
+	}
 
 	return out;
 }

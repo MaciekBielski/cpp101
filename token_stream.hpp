@@ -14,6 +14,7 @@ using uint = unsigned int;
 class TokenStream final {
 	private:
 		unique_ptr<Token> token = nullptr;
+		unique_ptr<Token> lastToken = nullptr;	//keeps pushed-back Token
 		std::mutex bufMtx;
 		condition_variable bufCv;
 
@@ -26,4 +27,7 @@ class TokenStream final {
 
 		void parseInput(const CursesIO& io);
 		unique_ptr<Token> passToken(const CursesIO &io);
+		inline void pushBackToken(unique_ptr<Token> &token) {
+			lastToken = std::move(token);
+		};
 };
