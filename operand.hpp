@@ -41,11 +41,14 @@ class Expression : public Operand {
 		Expression() = delete;
 		Expression(TokenStack &filo, TokenStream &stream, CursesIO &io);
 
-		void accept(Token *t);
+		void dispatch(Token *t);
 		void run();
 		void dbg(const string &s) override;
 		void compute(const ValToken *val) override;
 		void compute(const AddSubToken *val)  override;
 		void compute(const MulDivToken *val)  override;
 		void compute(const BracketToken *val) override;
+};
+
+class Term : public Operand {
 };

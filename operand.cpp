@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "operand.hpp"
 
 #include "token.hpp"
@@ -9,14 +11,15 @@ Expression::Expression(TokenStack &filo, TokenStream &stream, CursesIO &cio):
 
 void Expression::reduce()
 {
-	auto rTok = static_cast<ValToken*> (move(stack.top()).release());
+	auto rTok = static_cast<ValToken*> (stack.top().release());
 	stack.pop();
-	auto opTok = static_cast<AddSubToken*> (move(stack.top()).release());
+	auto opTokStr = static_cast<string> (*(stack.top().release()));
 	stack.pop();
-	auto lTok = static_cast<ValToken*> (move(stack.top()).release());
+	auto lTok = static_cast<ValToken*> (stack.top().release());
 	stack.pop();
 
-	auto resVal = ("+"s == static_cast<string> (*opTok)) ?
+	assert( ("+"s == opTokStr) || ("-"s == opTokStr));
+	auto resVal = ("+"s == opTokStr) ?
 		lTok->getVal() + rTok->getVal() :
 		lTok->getVal() - rTok->getVal();
 
@@ -24,14 +27,13 @@ void Expression::reduce()
 
 	dbg("rVal: "s + static_cast<string>(*rTok) +
 		" lVal: "s + static_cast<string>(*lTok) +
-		" op: "s + static_cast<string>(*opTok) +
+		" op: "s + opTokStr +
 		" pushed: "s + static_cast<string>(*resToken));
 
 	stack.push(move(resToken));
 }
 
-/* TODO: Thing about visitor here how to make it short */
-void Expression::accept(Token *t)
+void Expression::dispatch(Token *t)
 {
 	t->compute(*this);
 }
@@ -45,7 +47,7 @@ void Expression::run()
 		currToken = ts.passToken(io);
 		dbg("Passed: "s + static_cast<string>(*currToken));
 		/* get underlying token */
-		accept(currToken.get());
+		dispatch(currToken.get());
 	} while (!shouldReturn);
 }
 
