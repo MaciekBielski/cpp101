@@ -23,25 +23,31 @@ class CharSet
 		inline bool isAddOrSub(const char &c) const;
 		inline bool isMulOrDiv(const char &c) const;
 		inline bool isBracket(const char &c) const;
+		inline bool isFin(const char &c) const;
 };
 
 
 inline bool CharSet::isVal(const char &c) const
 {
-   return ( vals.find(c) != vals.end() );
+   return (vals.find(c) != vals.end());
 }
 
 inline bool CharSet::isAddOrSub(const char &c) const
 {
-   return ( addSub.find(c) != addSub.end() );
+   return (addSub.find(c) != addSub.end());
 }
 
 inline bool CharSet::isMulOrDiv(const char &c) const
 {
-   return ( mulDiv.find(c) != mulDiv.end() );
+   return (mulDiv.find(c) != mulDiv.end());
 }
 
 inline bool CharSet::isBracket(const char &c) const
 {
-   return ( brackets.find(c) != brackets.end() );
+   return (brackets.find(c) != brackets.end());
+}
+
+inline bool CharSet::isFin(const char &c) const
+{
+	return c == '=';
 }

@@ -45,7 +45,7 @@ int main()
 	io.setupWindows();
 	io.clearScreen();
 
-	auto uiThread = thread{ [&ts, &io](){ ts.parseInput(io); } };
+	auto uiThread = thread{[&ts, &io]() {ts.parseInput(io);} };
 
 	auto filo = stack<unique_ptr<Token>>{};
 	auto exp = Expression{filo, ts, io};

@@ -35,11 +35,11 @@ class CursesIO
 		CursesIO(const CursesIO& rhs) = delete;
 		CursesIO(CursesIO &&rhs) noexcept;
 		CursesIO& operator=( CursesIO rhs ) = delete;
+		const CursesIO& operator>>( char& c) const;
 		virtual ~CursesIO();
 
 		void clearScreen() const;
 		void setupWindows();
-		const CursesIO& operator>>( char& c) const;
 		void acceptChar(const char c, stringstream &acc) const;
 		void err(const string& str) const;
 		void correctLast(const char * const c = nullptr) const;

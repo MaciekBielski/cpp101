@@ -116,22 +116,25 @@ static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
 {
 	/* if ')', then check if bracket allowed */
 	if (c==')')
-	{
 		if (openBs)
 			--openBs;
 		else
-		{
-			//io.err("Bracket not allowed");
 			return;
-		}
-	}
-	if (toEmit != nullptr)
-	{
+	/* if '=' then allow only if all brackets paired, otherwise return */
+	else if (io.getCharSet().isFin(c) && !!openBs)
+		return;
+	/* emit value */
+	if (toEmit != nullptr) {
 		eraseIfTrailingDot(io, *toEmit);
 		token = emitToken(io, *toEmit);
 	}
 	hasDot = false;
-	io.acceptChar( c, acc);
+	io.acceptChar(c, acc);
+	//TODO: if '=' then correct last character on screen and emit immediately
+	if (io.getCharSet().isFin(c) && !openBs) {
+		io.correctLast(nullptr);
+		io.err("SHOULD RETURN"s);
+	}
 }
 
 /* should acc become part of CursesIO? */
@@ -154,11 +157,12 @@ static inline void correctPrevChar(char c, stringstream &acc)
 //XXX: here, the 'c' type should be statically setup to be 'Op', instead of char
 //XXX: differentiate opAcc vs valAcc at least by name
 static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
-		unsigned int &openBrackets, unique_ptr<Token> &emited)
+		unsigned int &openBs, unique_ptr<Token> &emited)
 {
-	/* [+] If prev was '/+-*' - accept '(', correct if '/+-*', ignore ')' */
-	/* [+] If prev was '(' - accept '(', ignore '/+-*)' */
-	/* [+] If prev was ')' - accept ')/+-*',  ignore '(' */
+	/* [+] If prev was '/+-*' - accept '(', correct if '/+-*=', ignore ')' */
+	/* [+] If prev was '(' - accept '(', ignore '/+-*)=' */
+	/* [+] If prev was ')' - accept ')/+-*=',  ignore '(' */
+	/* '=' emits the token immediately */
 	/* test it! */
 	/* another bracket control inside */
 	const CharSet& chSet = io.getCharSet();
@@ -169,36 +173,44 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 		case '*':
 		case '+':
 		case '-':
-			if( chSet.isMulOrDiv(c) || chSet.isAddOrSub(c) )
-			{
+			if (chSet.isMulOrDiv(c) || chSet.isAddOrSub(c)) {
 				correctPrevChar(c, acc);
 				io.correctLast(&c);
 				//io.err("opAfterOp: CORRECT");
-			}
-			else if( c == '(' )
-			{
-				++openBrackets;
+			} else if (chSet.isFin(c) && !openBs) {
+				correctPrevChar(c, acc);
+				io.correctLast(nullptr);
+				io.err("SHOULD RETURN"s);
+				//TODO: token will be emitted immediately
+			} else if (c == '(') {
+				++openBs;
 				emited = emitToken(io, acc);
 				io.acceptChar(c, acc);
 			}
 			break;
 		case '(':
-			if( c == '(' )
+			if ( c == '(' )
 			{
-				++openBrackets;
+				++openBs;
 				emited = emitToken(io, acc);
 				io.acceptChar(c, acc);
 			}
 			break;
 		case ')':
 			/* '(' ignored */
-			if( chSet.isMulOrDiv(c) || chSet.isAddOrSub(c)
-					|| ( c==')' && openBrackets>0 ) )
-			{
-				if( c==')' )
-					--openBrackets;
+			//TODO: implement '=' and test
+			//TODO: test for brackets - not tested fix
+			if (chSet.isMulOrDiv(c) || chSet.isAddOrSub(c) ||
+					chSet.isBracket(c)) {
+				if (c==')')
+					--openBs;
 				emited = emitToken(io, acc);
 				io.acceptChar(c, acc);
+			} else if (chSet.isFin(c) && !openBs) {
+				emited = emitToken(io, acc);
+				io.acceptChar(c, acc);
+				io.correctLast(nullptr);
+				io.err("SHOULD RETURN"s);
 			}
 			break;
 	}
@@ -219,54 +231,51 @@ void TokenStream::parseInput(const CursesIO &io)
 	auto openBrackets = 0u;
 	auto chSet = io.getCharSet();
 
-	/* First charcter of input: ")*+/" are ignored at the beginning */ 
+	/* First character of input: ")*+/" are ignored at the beginning */ 
 	char first;
 	do {
 		io >> first;
-		if( chSet.isVal(first) )
-		{
+		if(chSet.isVal(first)) {
 			//TODO: this function prototype is not so nice
 			firstCharOfVal(first, hasDot, valAcc, io);
 			getFirst = false;
 		}
-		else if ( first == '(' )
-		{
+		else if (first == '(') {
 			io.acceptChar(first, opAcc);
 			++openBrackets;
 			getFirst = false;
 		}
-	} while(getFirst);
+	} while (getFirst);
 	//io.err("First valid character taken");
 
 	/* 2nd and further characters */
-	for(char c; io >> c;)
-	{
+	for (char c; io >> c;) {
 		// sync: wait till token is null
 		unique_lock<mutex> bufLk {bufMtx};
 		bufCv.wait(bufLk, [this]{ return !(this->token); });
 
-		if( chSet.isVal(c) )
+		if (chSet.isVal(c)) {
 			opAcc.str().empty() ?
 				notFirstCharOfVal(c, hasDot, valAcc, io) :
 				firstCharOfVal(c, hasDot, valAcc, io, &token, &opAcc);
-		else
-		{
+		} else {
 			/* previous character was a digit - '(' is ignored */
-			if( !valAcc.str().empty() && c != '(' )
+			if (!valAcc.str().empty() && c != '(')
 				firstOpAfterVal(c, hasDot, opAcc, io, openBrackets, token, &valAcc);
 			/* operator following another operator, */
-			else if( !opAcc.str().empty() > 0 )
+			else if (!opAcc.str().empty() > 0)
 				opAfterOp(c, opAcc, io, openBrackets, token);
 		}
 
-		if(token)
-		{
+		if (token) {
 			//io.err("Emitted "s + static_cast<string>(*token));
 
-			// sync: wait till token is null
 			bufLk.unlock();
 			bufCv.notify_one();
 			// yield here
+
+			//TODO: if last character was '=' then after emitting value emit
+			//the token immediately
 		}
 	}
 }

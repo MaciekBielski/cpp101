@@ -45,8 +45,8 @@ void CursesIO::setupWindows()
 bool CursesIO::validChar(char k) const
 {
 	auto out = false;
-	if( chSet.isVal(k) || chSet.isAddOrSub(k) || chSet.isMulOrDiv(k) ||
-			chSet.isBracket(k) )
+	if (chSet.isVal(k) || chSet.isAddOrSub(k) || chSet.isMulOrDiv(k) ||
+			chSet.isBracket(k) || chSet.isFin(k))
 		out = true;
 	return out;
 }
@@ -58,9 +58,9 @@ const CursesIO& CursesIO::operator>>( char& c ) const
 {
 	//auto tmp = char{0};
 	char tmp{0};
-	do{
+	do {
 		tmp = this->getc();
-	}while( !validChar(tmp) );
+	} while (!validChar(tmp));
 	c = tmp;
 
 	return *this;
@@ -72,12 +72,14 @@ void CursesIO::correctLast(const char * const c) const
 {
 	int currY {0}, currX {0};
 	getyx(in, currY, currX);
-	if(currX == 0)
+
+	if (currX == 0)
 		wmove(in, currY-1, COLS-4-1);
 	else
 		wmove(in, currY, currX-1);
 	wclrtoeol(in);
-	if(c)
+
+	if (c)
 		this->putc(in, *c);
 	wrefresh(in);
 }
@@ -101,7 +103,7 @@ void CursesIO::err(const string& str) const
 	mvwprintw(pad, padCurr, 0, str.c_str() );
 	prefresh(pad, padTop, 0, DBGFIRST, 2, DBGLAST, COLS-2 );
 	padCurr = (padCurr +1) % PADLEN;
-	if(0 == padCurr)
+	if (0 == padCurr)
 		wclear(pad);
 	padTop = (padCurr > DBGINNER) ? padCurr - DBGINNER : 0 ;
 	wrefresh(in);
