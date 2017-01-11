@@ -98,6 +98,14 @@ void Expression::compute(const BracketToken *val)
 	}
 }
 
+void Expression::compute(const FinToken *val)
+{
+	currToken.release();			//this can be forgotten
+	reduce();
+	dbg("Fin:Expression return"s);
+	shouldReturn = true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 Term::Term(const Expression &exp):
 	Operand{exp.getStack(), exp.getStream(), exp.getIO()}
@@ -175,3 +183,13 @@ void Term::compute(const BracketToken *val)
 		shouldReturn = true;
 	}
 }
+
+void Term::compute(const FinToken *val)
+{
+	//TODO
+	reduce();
+	dbg("Term pushBack "s + static_cast<string>(*val));
+	ts.pushBackToken(currToken);
+	shouldReturn = true;
+}
+

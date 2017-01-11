@@ -52,6 +52,7 @@ int main()
 
 	/* When this returns it is a final result */
 	exp.run();
+	io.err("returned");
 
 	uiThread.join();
 	return 0;

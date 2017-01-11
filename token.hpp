@@ -68,3 +68,10 @@ class BracketToken : public OpToken {
 
 		_compute(Operand);
 };
+
+class FinToken : public OpToken {
+	public:
+		FinToken(const string &r);
+
+		_compute(Operand);
+};

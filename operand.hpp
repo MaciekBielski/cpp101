@@ -11,6 +11,7 @@ class ValToken;
 class AddSubToken;
 class MulDivToken;
 class BracketToken;
+class FinToken;
 
 using namespace std;
 using TokenStack = stack<unique_ptr<Token>>;
@@ -37,6 +38,7 @@ class Operand {
 		virtual void compute(const AddSubToken *val)  = 0;
 		virtual void compute(const MulDivToken *val)  = 0;
 		virtual void compute(const BracketToken *val) = 0;
+		virtual void compute(const FinToken *val) = 0;
 };
 
 /* TODO: Setup promoters, served and degraders operators */
@@ -57,6 +59,7 @@ class Expression : public Operand {
 		void compute(const AddSubToken *val)  override;
 		void compute(const MulDivToken *val)  override;
 		void compute(const BracketToken *val) override;
+		void compute(const FinToken *val) override;
 };
 
 class Term : public Operand {
@@ -76,5 +79,6 @@ class Term : public Operand {
 		void compute(const AddSubToken *val) override;
 		void compute(const MulDivToken *val) override;
 		void compute(const BracketToken *val) override;
+		void compute(const FinToken *val) override;
 };
 

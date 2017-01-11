@@ -44,3 +44,8 @@ MulDivToken::MulDivToken(const string &r):
 BracketToken::BracketToken(const string &r):
 	OpToken{r}
 {}
+
+FinToken::FinToken(const string &r):
+	OpToken{r}
+{}
+//TODO: make FinToken

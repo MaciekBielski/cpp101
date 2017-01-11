@@ -35,6 +35,9 @@ static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 			out = make_unique<MulDivToken>(str);
 		else if (chSet.isBracket(c))
 			out = make_unique<BracketToken>(str);
+		else if (chSet.isFin(c))
+			// TODO: make FinToken
+			//  out = make_unique<BracketToken>(str);
 
 		return out;
 	};
@@ -60,8 +63,6 @@ static bool valAfterCloseBracket(stringstream& opAcc)
 	return out;
 }
 
-/* TODO: Does not always emit. Value should be returned by optional pointer
- */
 static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
 		const CursesIO &io, unique_ptr<Token> *emited = nullptr,
 		stringstream *toEmit = nullptr)
@@ -130,7 +131,7 @@ static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
 	}
 	hasDot = false;
 	io.acceptChar(c, acc);
-	//TODO: if '=' then correct last character on screen and emit immediately
+	//if '=' then correct last character on screen and emit immediately
 	if (io.getCharSet().isFin(c) && !openBs) {
 		io.correctLast(nullptr);
 		io.err("SHOULD RETURN"s);
@@ -276,6 +277,16 @@ void TokenStream::parseInput(const CursesIO &io)
 
 			//TODO: if last character was '=' then after emitting value emit
 			//the token immediately
+			if (chSet.isFin(c)) {
+				io.err("Emitting RETURN immediately"s);
+				bufLk.lock();
+				bufCv.wait(bufLk, [this]{ return !(this->token); });
+				
+				token = emitToken(io, opAcc);
+				bufLk.unlock();
+				bufCv.notify_one();
+				break;
+			}
 		}
 	}
 }
