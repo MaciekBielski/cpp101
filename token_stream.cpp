@@ -17,6 +17,10 @@
 /*
  * Takes stringstream's last character to decide the type of a token.
  * TODO: Return unique_ptr to the Token.
+ *
+ * The case of '=' emitting is not handled here since it occurs only at the
+ * end of the program and the unique_ptr::reset is used for that at the bottom
+ * of parseInput loop
  */
 static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 {
@@ -35,9 +39,6 @@ static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 			out = make_unique<MulDivToken>(str);
 		else if (chSet.isBracket(c))
 			out = make_unique<BracketToken>(str);
-		else if (chSet.isFin(c))
-			// TODO: make FinToken
-			//  out = make_unique<BracketToken>(str);
 
 		return out;
 	};
@@ -63,28 +64,39 @@ static bool valAfterCloseBracket(stringstream& opAcc)
 	return out;
 }
 
+/*
+ * - toEmit: keeps the previous operator, used to detect whether this is a
+ *   character after operator or the very first character of an expression and
+ *   to create a Token if allowed (read below)
+ * - emited: used to pass the created Token
+ *
+ * When the very first character is parsed both `emited` and `toEmit` pointers
+ * are null. Otherwise `first` is a character of the value that follows an
+ * operator. In that case nothing is printed on the screen since the sequence
+ * ')123' is incorrect.
+ * If the value starts from `.`, `0` is appended automatically
+ */
 static void firstCharOfVal(const char first, bool &hasDot, stringstream &inAcc,
 		const CursesIO &io, unique_ptr<Token> *emited = nullptr,
 		stringstream *toEmit = nullptr)
 {
 	/* we are sure here that 'first' isVal, ignore it if after ')' */
 	if (toEmit != nullptr && valAfterCloseBracket(*toEmit) )
-	{
-		//io.err("Ignored "s + first + " after )");
 		return;
-	}
 
 	if (toEmit != nullptr)
 		 *emited = emitToken(io, *toEmit);
 
-	if (first == '.')
-	{
+	if (first == '.') {
 		hasDot = true;
 		io.acceptChar('0', inAcc);
 	}
 	io.acceptChar( first, inAcc);
 }
 
+/* 
+ * Accumulates characters of the value, does not allow for more than one dot
+ */
 static void notFirstCharOfVal(const char c, bool &hasDot,
 		stringstream &acc, const CursesIO &io)
 {
@@ -220,9 +232,9 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 
 /*
  * This should filter whatever cannot be printed on screen during typing
- * Accummulators are keeping what will be emited as a token but have nothing in
- * common with the screen
- *
+ * Accummulators `valAcc` and `opAcc` are keeping what will be emited as a
+ * token after all symbols are collected. `opAcc` is always made of one
+ * character but `valAcc` can include multiple digits and one dot.
  */
 void TokenStream::parseInput(const CursesIO &io)
 {
@@ -232,12 +244,14 @@ void TokenStream::parseInput(const CursesIO &io)
 	auto openBrackets = 0u;
 	auto chSet = io.getCharSet();
 
-	/* First character of input: ")*+/" are ignored at the beginning */ 
+	/*
+	 * First character of input: ")*+/=" make no sense at the beginning and are
+	 * ignored
+	 */ 
 	char first;
 	do {
 		io >> first;
 		if(chSet.isVal(first)) {
-			//TODO: this function prototype is not so nice
 			firstCharOfVal(first, hasDot, valAcc, io);
 			getFirst = false;
 		}
@@ -247,11 +261,9 @@ void TokenStream::parseInput(const CursesIO &io)
 			getFirst = false;
 		}
 	} while (getFirst);
-	//io.err("First valid character taken");
 
 	/* 2nd and further characters */
 	for (char c; io >> c;) {
-		// sync: wait till token is null
 		unique_lock<mutex> bufLk {bufMtx};
 		bufCv.wait(bufLk, [this]{ return !(this->token); });
 
@@ -282,7 +294,7 @@ void TokenStream::parseInput(const CursesIO &io)
 				bufLk.lock();
 				bufCv.wait(bufLk, [this]{ return !(this->token); });
 				
-				token = emitToken(io, opAcc);
+				token.reset(new FinToken(opAcc.str()));
 				bufLk.unlock();
 				bufCv.notify_one();
 				break;

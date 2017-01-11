@@ -2,11 +2,8 @@
  * Simple calculator
  *
  * TODO:
- * [-] emitToken synchronize consumer & producer
- * [-] I/O of Tokens: Operator vs Operands
- * [-] emiting tokens in one thread, consuming in the other
- * [-] consuming as an iterator
- * [-] refactor
+ * [-] brackets counting is not perfect
+ * [-] describe synchronisation in parseInput
  * [-] issue with negative values
  */
 
@@ -21,7 +18,7 @@
 #include "charset.hpp"
 #include "token_stream.hpp"
 
-/* Globals */
+/* Globals to setup screen layout */
 
 const int CENTERY   {(LINES/2) -1} ;
 const int CENTERX   {(COLS/2) -1} ;
@@ -35,7 +32,9 @@ const int INLINES   { static_cast<int>((LINES-DBGTOP)/4.0) };
 
 
 /*
- * Main
+ * Input is parsed in a separate thread and an expression is built in the main
+ * thread, parsing thread produces tokens out of allowed symbols and they are
+ * passed to Expression (or Term) for further processing.
  */
 int main()
 {
@@ -52,7 +51,8 @@ int main()
 
 	/* When this returns it is a final result */
 	exp.run();
-	io.err("returned");
+	io.err("Result: "s + static_cast<string>(*(filo.top().release())));
+	io.waitChar();
 
 	uiThread.join();
 	return 0;
