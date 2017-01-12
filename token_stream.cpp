@@ -3,6 +3,7 @@
 #include <cassert>
 #include <memory>
 #include <utility>
+#include <thread>
 
 /*
  * CursesIO::operator>> performs already basic filtering so only characters
@@ -19,8 +20,8 @@
  * TODO: Return unique_ptr to the Token.
  *
  * The case of '=' emitting is not handled here since it occurs only at the
- * end of the program and the unique_ptr::reset is used for that at the bottom
- * of parseInput loop
+ * end of the program and at the bottom of parseInput loop the token is
+ * produced ad-hoc
  */
 static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 {
@@ -52,6 +53,7 @@ static unique_ptr<Token> emitToken(const CursesIO &io, stringstream &acc)
 	return outToken;
 }
 
+/* useful to check because that is incorrect */
 static bool valAfterCloseBracket(stringstream& opAcc)
 {
 	bool out = false;
@@ -122,20 +124,32 @@ static void eraseIfTrailingDot(const CursesIO &io, stringstream &valAcc)
 	valAcc.seekg(0, ios::basic_ios::end);
 }
 
-/* '(' has been already checked for */
+/*
+ * This function is never called for '(' since '123(' is incorrect. ')' is
+ * allowed only if there is already '(' to pair with. '=' is allowed only when
+ * all brackets are closed and is not printed on the screen. Building token
+ * from '=' is done ad-hoc in the parseInput loop, not here.
+ */
 static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
 		const CursesIO &io, uint& openBs, unique_ptr<Token> &token,
 		stringstream *toEmit = nullptr)
 {
 	/* if ')', then check if bracket allowed */
-	if (c==')')
-		if (openBs)
+	if (c==')') {
+		if (openBs>0) {
 			--openBs;
-		else
+			io.err("openBs: "s + to_string(openBs));
+		}
+		else {
+			io.err("No bracket is open, ignored!"s);
 			return;
+		}
+	}
 	/* if '=' then allow only if all brackets paired, otherwise return */
-	else if (io.getCharSet().isFin(c) && !!openBs)
+	else if (io.getCharSet().isFin(c) && !!openBs) {
+		io.err("Brackets not balanced\n"s);
 		return;
+	}
 	/* emit value */
 	if (toEmit != nullptr) {
 		eraseIfTrailingDot(io, *toEmit);
@@ -147,10 +161,9 @@ static void firstOpAfterVal(const char c, bool &hasDot, stringstream &acc,
 	if (io.getCharSet().isFin(c) && !openBs) {
 		io.correctLast(nullptr);
 		io.err("SHOULD RETURN"s);
-	}
+}
 }
 
-/* should acc become part of CursesIO? */
 static inline const char getPrevChar(stringstream &acc)
 {
 	acc.seekg(-1, ios::basic_ios::end);
@@ -163,19 +176,18 @@ static inline void correctPrevChar(char c, stringstream &acc)
 	acc << c;
 }
 
-/* op is emitted only when first number after op will be written, so
- * checks and corrections can be done here with screen updating.
- * Brackets control has to be done inside, not before or after.
+/* Op is emitted only when first number after op will be written, so when
+ * operator comes after operator usually the previous one is overwritten and
+ * noting is emitted, with some exceptions.
+ * More specific rules roughly:
+ * - prev was '/+-*' - accept '(', correct if '/+-*=', ignore ')'
+ * - prev was '(' - accept '(', ignore '/+-*)='
+ * - prev was ')' - accept ')/+-*=',  ignore '('
+ * - '=' emits the token immediately
  */
-//XXX: here, the 'c' type should be statically setup to be 'Op', instead of char
-//XXX: differentiate opAcc vs valAcc at least by name
 static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 		unsigned int &openBs, unique_ptr<Token> &emited)
 {
-	/* [+] If prev was '/+-*' - accept '(', correct if '/+-*=', ignore ')' */
-	/* [+] If prev was '(' - accept '(', ignore '/+-*)=' */
-	/* [+] If prev was ')' - accept ')/+-*=',  ignore '(' */
-	/* '=' emits the token immediately */
 	/* test it! */
 	/* another bracket control inside */
 	const CharSet& chSet = io.getCharSet();
@@ -189,7 +201,6 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 			if (chSet.isMulOrDiv(c) || chSet.isAddOrSub(c)) {
 				correctPrevChar(c, acc);
 				io.correctLast(&c);
-				//io.err("opAfterOp: CORRECT");
 			} else if (chSet.isFin(c) && !openBs) {
 				correctPrevChar(c, acc);
 				io.correctLast(nullptr);
@@ -197,33 +208,41 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 				//TODO: token will be emitted immediately
 			} else if (c == '(') {
 				++openBs;
+				io.err("openBs: "s + to_string(openBs));
 				emited = emitToken(io, acc);
 				io.acceptChar(c, acc);
 			}
 			break;
 		case '(':
-			if ( c == '(' )
-			{
+			if ( c == '(' ) {
 				++openBs;
+				io.err("openBs: "s + to_string(openBs));
 				emited = emitToken(io, acc);
 				io.acceptChar(c, acc);
 			}
 			break;
 		case ')':
-			/* '(' ignored */
-			//TODO: implement '=' and test
-			//TODO: test for brackets - not tested fix
-			if (chSet.isMulOrDiv(c) || chSet.isAddOrSub(c) ||
-					chSet.isBracket(c)) {
-				if (c==')')
+			if (chSet.isMulOrDiv(c) || chSet.isAddOrSub(c)) {
+				emited = emitToken(io, acc);
+				io.acceptChar(c, acc);
+			} else if (c==')') {
+				if (openBs) {
 					--openBs;
-				emited = emitToken(io, acc);
-				io.acceptChar(c, acc);
-			} else if (chSet.isFin(c) && !openBs) {
-				emited = emitToken(io, acc);
-				io.acceptChar(c, acc);
-				io.correctLast(nullptr);
-				io.err("SHOULD RETURN"s);
+					io.err("openBs: "s + to_string(openBs));
+					emited = emitToken(io, acc);
+					io.acceptChar(c, acc);
+				} else {
+					io.err("Brackets not balanced\n"s);
+				}
+			} else if (chSet.isFin(c)) {
+				if (!openBs) {
+					io.err("SHOULD RETURN"s);
+					emited = emitToken(io, acc);
+					io.acceptChar(c, acc);
+					io.correctLast(nullptr);
+				} else {
+					io.err("Brackets not balanced\n"s);
+				}
 			}
 			break;
 	}
@@ -231,10 +250,23 @@ static void opAfterOp(const char c, stringstream &acc, const CursesIO &io,
 }
 
 /*
- * This should filter whatever cannot be printed on screen during typing
- * Accummulators `valAcc` and `opAcc` are keeping what will be emited as a
- * token after all symbols are collected. `opAcc` is always made of one
- * character but `valAcc` can include multiple digits and one dot.
+ * This function is Tokens producer.
+ *
+ * This should filter whatever cannot be printed on screen during typing.
+ * Accummulators `valAcc` and `opAcc` are collecting characters that will be
+ * emited as a token afterwards. `opAcc` is always made of one character but
+ * `valAcc` can include multiple digits and one dot.
+ *
+ * Token is created when the first character of a new token will come, eg '3'
+ * after '+' or '*' after '8'. Emission takes place as follows:
+ * the loop that collects characters wait until token is null, then iterates
+ * until all characters of a token are collected. After that `token` becomes
+ * not null and this iteration performs additional step, notifying the main
+ * thread that receives produced tokens. The next iteration waits again until
+ * the token will become consumed.
+ *
+ * There is a corner-case of '=', when it has to be emitted in the same
+ * iteration since no further characters is expected to be received.
  */
 void TokenStream::parseInput(const CursesIO &io)
 {
@@ -281,18 +313,22 @@ void TokenStream::parseInput(const CursesIO &io)
 		}
 
 		if (token) {
-			//io.err("Emitted "s + static_cast<string>(*token));
-
 			bufLk.unlock();
 			bufCv.notify_one();
 			// yield here
 
-			//TODO: if last character was '=' then after emitting value emit
-			//the token immediately
 			if (chSet.isFin(c)) {
-				io.err("Emitting RETURN immediately"s);
+				//this cannot be synchronised with the same lock because
+				//it can get locked immediately before `passToken` will consume
+				//`token`, but because it happens only once at the end it is
+				//simpler to make waiting loop until `token` is null.
 				bufLk.lock();
-				bufCv.wait(bufLk, [this]{ return !(this->token); });
+				while (token) {
+					bufLk.unlock();
+					this_thread::sleep_for(100ms);
+					bufLk.lock();
+				}
+				io.err("Emit last token"s);
 				
 				token.reset(new FinToken(opAcc.str()));
 				bufLk.unlock();
@@ -303,6 +339,14 @@ void TokenStream::parseInput(const CursesIO &io)
 	}
 }
 
+/*
+ * Tokens consumer, called by Expression and Term.
+ *
+ * First checks if previously obtained token has been pushed back as a
+ * `lastToken`. This is used when Term receives tokens that are not handled by
+ * Term, then such token is pushed back and Term returns to its caller
+ * (Expression), which deals with it.
+ */
 unique_ptr<Token> TokenStream::passToken(const CursesIO &io)
 {
 	auto out = unique_ptr<Token>{nullptr};
@@ -318,7 +362,7 @@ unique_ptr<Token> TokenStream::passToken(const CursesIO &io)
 
 		// move the ownership
 		out = std::move(token);
-		io.err("Get new: "s + static_cast<string>(*out));
+		io.err(__func__ + "Get new: "s + static_cast<string>(*out));
 
 		assert(!token);
 		// let the parseInput run another iteration

@@ -58,7 +58,7 @@ void Expression::run()
 
 	do {
 		currToken = ts.passToken(io);
-		/* get underlying token */
+		io.err("Dispatching"s + static_cast<string>(*currToken));
 		dispatch(currToken.get());
 	} while (!shouldReturn);
 }
@@ -100,9 +100,9 @@ void Expression::compute(const BracketToken *val)
 
 void Expression::compute(const FinToken *val)
 {
-	currToken.release();			//this can be forgotten
 	reduce();
 	dbg("Fin:Expression return"s);
+	currToken.release();			//this can be forgotten
 	shouldReturn = true;
 }
 
