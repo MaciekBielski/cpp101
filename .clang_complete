@@ -1,0 +1,5 @@
+-I.
+-I/usr/include/
+-I/usr/include/c++/5
+-I/usr/include/x86_64-linux-gnu/c++/5
+-I/opt/clang_llvm_3.9.0/

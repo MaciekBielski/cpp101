@@ -7,26 +7,25 @@ TARGET		= calc
 
 .PHONY: clean
 
-SRC		= $(wildcard $(PWD)/*.cpp)
-OBJS 	= $(SRC:.cpp=.o)
-DEPS	= $(SRC:.cpp=.d)
+SRC		:= $(wildcard *.cpp)
+OBJS	:= $(SRC:.cpp=.o)
+DEPS	:= $(SRC:.cpp=.d)
 
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	@rm -rf $@
+	@/bin/rm -rf $@
 	@echo [linking] $@
 	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
-	@rm GPATH GRTAGS GSYMS GTAGS && gtags .
 
 -include $(DEPS)
 
 %.o : %.cpp
 	@echo [build] $@
-	@$(CXX) $(CXXFLAGS) -MMD -c $< -o $@ 
-
+	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
 
 clean:
-	@-rm -rf $(TARGET) $(OBJS) $(DEPS)
-
+	@echo [cleaning] $(SRC)
+	@-/bin/rm -rf $(TARGET) $(OBJS) $(DEPS)
 
 # add headers later

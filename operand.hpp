@@ -41,11 +41,9 @@ class Operand {
 		virtual void compute(const FinToken *val) = 0;
 };
 
-/* TODO: Setup promoters, served and degraders operators */
 class Expression : public Operand {
 	private:
 		bool shouldReturn = false;
-
 		void reduce() override;
 
 	public:
@@ -55,7 +53,6 @@ class Expression : public Operand {
 		void dispatch(Token *t) override;
 		void run() override;
 		void dbg(const string &s) override;
-		//void compute(const ValToken *val) override;
 		void compute(const AddSubToken *val)  override;
 		void compute(const MulDivToken *val)  override;
 		void compute(const BracketToken *val) override;
@@ -65,7 +62,6 @@ class Expression : public Operand {
 class Term : public Operand {
 	private:
 		bool shouldReturn = false;
-
 		void reduce() override;
 
 	public:
@@ -75,10 +71,13 @@ class Term : public Operand {
 		void dispatch(Token *t) override;
 		void run() override;
 		void dbg(const string &s) override;
-		//void compute(const ValToken *val) override;
 		void compute(const AddSubToken *val) override;
 		void compute(const MulDivToken *val) override;
 		void compute(const BracketToken *val) override;
 		void compute(const FinToken *val) override;
 };
 
+/*
+template< typename T >
+class Item
+*/
